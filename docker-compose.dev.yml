@@ -1,0 +1,38 @@
+# Development stack: Postgres for the API, Mailpit to catch magic-link mail.
+# Application processes run on the host via `turbo run dev`, not in compose,
+# so hot reload stays instant.
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ukweli-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ukweli
+      POSTGRES_PASSWORD: ukweli
+      POSTGRES_DB: ukweli
+    ports:
+      - '5432:5432'
+    volumes:
+      - ukweli-pgdata-dev:/var/lib/postgresql/data
+      # Runs once, when the volume is first created: adds ukweli_test so the
+      # integration tests never touch the database being demoed.
+      - ./docker/postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ukweli -d ukweli']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: ukweli-mailpit-dev
+    restart: unless-stopped
+    ports:
+      - '1025:1025' # SMTP
+      - '8025:8025' # Web UI
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+
+volumes:
+  ukweli-pgdata-dev:

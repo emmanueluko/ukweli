@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Ukweli.Api/Ukweli.Api.csproj" />
+    <Project Path="src/Ukweli.Contracts/Ukweli.Contracts.csproj" />
+    <Project Path="src/Ukweli.Data/Ukweli.Data.csproj" />
+    <Project Path="src/Ukweli.Evidence/Ukweli.Evidence.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Ukweli.Api.Tests/Ukweli.Api.Tests.csproj" />
+    <Project Path="tests/Ukweli.Evidence.Tests/Ukweli.Evidence.Tests.csproj" />
+  </Folder>
+</Solution>

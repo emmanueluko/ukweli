@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  backend:
+    name: Backend (build + test)
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ukweli
+          POSTGRES_PASSWORD: ukweli
+          POSTGRES_DB: ukweli_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ukweli -d ukweli_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # The integration tests read this; the dev default points at localhost too,
+      # but naming it here makes the dependency explicit.
+      TEST_DATABASE_URL: postgres://ukweli:ukweli@localhost:5432/ukweli_test
+      DATABASE_URL: postgres://ukweli:ukweli@localhost:5432/ukweli_test
+      APP_URL: http://localhost:5173
+      AUTH_ENABLED: 'false'
+      DOTNET_NOLOGO: 'true'
+      DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore tools and packages
+        run: |
+          dotnet tool restore
+          dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Verify formatting
+        run: dotnet format --verify-no-changes
+
+      - name: Test
+        run: dotnet test --configuration Release --no-build --verbosity normal
+
+  web:
+    name: Web placeholder (typecheck + build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - run: npm ci
+      - run: npm run build

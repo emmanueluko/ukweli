@@ -1,0 +1,22 @@
+<Project>
+
+  <!-- Inherit everything from the repository root, then relax what only makes
+       sense for production code. -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!--
+      CA1707 forbids underscores in member names. Test names use them to
+      separate the subject from the expected behaviour, which is what makes a
+      failing test readable in CI output. Suppressed for test projects only.
+      CA1861 objects to constant arrays in [InlineData]-style call sites.
+    -->
+    <NoWarn>$(NoWarn);CA1707;CA1861</NoWarn>
+  </PropertyGroup>
+
+</Project>

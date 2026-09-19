@@ -1,24 +1,60 @@
-# ukweli
-Evidence-backed civic information verification for African communities. Check claims, understand sources, and take informed action.
-
 # Ukweli
 
-Ukweli is a hackathon proof of concept that helps people verify civic claims against cited sources, understand what the evidence says, and identify a safe next step.
+Evidence-backed civic information verification for African communities. Check
+claims, understand sources, and take informed action.
 
-## Hackathon MVP
+Ukweli is a hackathon proof of concept. A resident pastes a civic claim — a
+forwarded message about a levy, a payment demand, a disease-outbreak rumour —
+and Ukweli checks it against a small, curated store of verified primary sources.
 
-- Enter or select a civic claim
-- Review a verdict: Supported, Contradicted, Mixed or Unclear, or Insufficient Evidence
-- Inspect source excerpts, original links, and publication dates
-- Read a plain-language explanation and suggested next step
-- Share a short result with its source and caveat
+## What it returns
 
-The initial demo covers a small, curated set of Nigerian civic information. It does not claim comprehensive or live fact-checking coverage.
+One verdict, never a confidence score:
+
+| Verdict | Meaning |
+| --- | --- |
+| `supported` | At least one primary official source supports the claim. |
+| `contradicted` | At least one primary official source explicitly contradicts it. |
+| `mixed_unclear` | Sources conflict, or only secondary sources speak to it. |
+| `insufficient_evidence` | The curated store has nothing relevant to say. |
+
+Alongside the verdict: the cited source excerpts with their URLs and
+publication dates, a plain-language explanation, what remains unknown, and one
+safe next step.
+
+## What it deliberately does not do
+
+- It does not search the open web. The model sees only the claim and excerpts
+  retrieved from the curated store.
+- It does not guess. An unknown claim returns `insufficient_evidence` rather
+  than a confident answer, and absence of evidence is never reported as
+  disproof.
+- It does not produce confidence percentages.
+- It does not store the raw text a user pasted — only a normalised claim.
+
+The demo covers a small, curated set of Nigerian civic information. It is not
+comprehensive or live fact-checking coverage.
+
+## Stack
+
+- **Backend** — C# on ASP.NET Core (.NET 10), EF Core + Postgres
+- **Frontend** — React with TypeScript (Vite); a placeholder until the backend
+  is complete
+- **Evidence store** — a curated JSON corpus of primary official sources,
+  validated before it can be seeded
+
+The safety rules that decide every verdict live in `src/Ukweli.Evidence`, a
+class library that references no HTTP or database package, so they can be tested
+in isolation. The model drafts text; the server owns every safety decision.
 
 ## Development
 
-Planned stack: React with TypeScript, ASP.NET Core API, and a curated evidence store. Implementation details and setup instructions will be added as development begins.
+Full setup instructions, the environment variable table, and curation
+instructions land with Phase 5. Build status: Phase 0 (scaffold) in progress.
 
-## Project document
+## Project documents
 
-See the Ukweli Product Requirements Document for scope, evidence rules, acceptance criteria, and the delivery plan.
+- [`CLAUDE.md`](CLAUDE.md) — the build specification: safety rules, data model,
+  phases, and acceptance criteria.
+- [`DECISIONS.md`](DECISIONS.md) — choices made where the spec was silent, and
+  the one place it was overridden.
