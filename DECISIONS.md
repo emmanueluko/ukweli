@@ -196,3 +196,58 @@ them to create.
 builds tables from the model and writes no migration history, so the test schema
 silently stops matching what a deployment applies — which is exactly how the
 `claim_analyses` table came to be missing from the test database.
+
+---
+
+## Phase 3 — AI analysis slice
+
+**`claude-opus-5` with structured outputs on both calls.** The response either
+parses against the JSON schema or the call fails; a half-parsed verdict is never
+guessed at. A status outside the four valid verdicts is treated as a failed
+call, not as something to coerce.
+
+**The jurisdiction schema uses `anyOf`, not a union type with `enum`.** The API
+rejects `{"type": ["string", "null"], "enum": [...]}` outright. The first live
+call failed on exactly this, which is also why the provider's failure message
+now names the underlying cause — without it, "could not be reached" was
+indistinguishable from a network fault.
+
+**One retry on extraction, none on the verdict, and the policy lives in
+`Ukweli.Evidence`.** Extraction is cheap and deterministic in intent, so a
+transient failure is worth a second attempt. A verdict is not: re-asking over
+the same excerpts is as likely to differ as to agree, and a verdict that changes
+between attempts is not a verdict. `AiRetry` sits beside the other safety rules
+so the policy is testable without a server — the first version of this test
+called the stub directly and proved nothing.
+
+**Retrieval has a relevance floor, and the floor matters more than the ranking.**
+Returning a weakly related source is worse than returning nothing: nothing
+yields `insufficient_evidence`, which is honest, while a weak match invites a
+verdict resting on a document that does not address the claim. A state-specific
+source scores zero against a claim about a different state, rather than ranking
+low.
+
+**Relations are derived from the proposed verdict, and a secondary source is
+always `context`.** The model returns one status, not a relation per source, so
+a primary source takes the verdict's relation and a secondary can never be what
+a verdict rests on (rule 5). This has a consequence worth recording: the
+"primary sources disagree" branch of rule 5 cannot be reached through the model
+path, because two cited primaries always receive the same relation. The check is
+kept — it guards the seeded path and any future per-source relations — but the
+test asserts what is actually reachable rather than pretending otherwise.
+Returning per-source relations from the verdict prompt would close this properly.
+
+**A location-dependent claim with no jurisdiction gets a scoped-limitation
+analysis and no verdict call.** Ukweli's sources are specific to a state or to
+Nigeria as a whole, so checking without knowing the place means checking the
+wrong evidence.
+
+**`Ukweli.Evidence` still references no HTTP package after all of this.**
+`IAiProvider`, the retry policy, retrieval and every guardrail live there;
+`AnthropicAiProvider` and the pipeline live in `Ukweli.Api`. The isolation test
+from Phase 0 still passes, which is the point of having written it.
+
+**The prompts state that the claim and excerpts are data, not instructions.**
+A forwarded message is attacker-controlled text, and both prompts say
+explicitly that anything in it resembling a command is content to assess rather
+than something to obey.

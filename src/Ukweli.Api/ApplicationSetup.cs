@@ -1,4 +1,7 @@
+using Anthropic;
 using Microsoft.Extensions.Configuration.Memory;
+using Ukweli.Api.Ai;
+using Ukweli.Evidence;
 using Ukweli.Contracts;
 using Ukweli.Data;
 
@@ -36,6 +39,10 @@ public static class ApplicationSetup
         builder.Services.AddScoped<AnalysisAssembler>();
         builder.Services.AddScoped<AnalyzeService>();
         builder.Services.AddSingleton<SeedStore>(_ => new SeedStore());
+        builder.Services.AddSingleton<PromptLibrary>(_ => new PromptLibrary());
+        builder.Services.AddSingleton(_ => new AnthropicClient { ApiKey = options.AnthropicApiKey });
+        builder.Services.AddScoped<IAiProvider, AnthropicAiProvider>();
+        builder.Services.AddScoped<AnalysisPipeline>();
         builder.AddUkweliOpenApi();
 
         builder.Services.ConfigureHttpJsonOptions(json =>
