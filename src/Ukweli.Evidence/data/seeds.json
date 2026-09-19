@@ -1,41 +1,45 @@
 [
   {
-    "id": "seed-lagos-shop-levy",
-    "claim": "Someone forwarded a message saying every small shop in Lagos must pay a new state levy before the end of this month or be sealed.",
-    "normalizedClaim": "Lagos State requires every small shop to pay a new levy this month or be sealed.",
-    "jurisdiction": "NG-LA",
-    "topic": "payments_levies",
+    "id": "seed-lassa-death-toll",
+    "claim": "Someone shared a message saying Lassa fever has already killed more than 250 people in Nigeria this year and that it has reached more than twenty states.",
+    "normalizedClaim": "Lassa fever has killed more than 250 people in Nigeria in 2026 and has been confirmed in more than twenty states.",
+    "jurisdiction": "NG",
+    "topic": "disease_outbreaks",
     "status": "supported",
-    "explanation": "PLACEHOLDER — curator must write what the cited notice actually says about this levy, quoting nothing beyond the recorded excerpt.",
-    "simpleExplanation": "PLACEHOLDER — curator must write the same finding in shorter words, introducing no fact the excerpt does not carry.",
+    "explanation": "The NCDC's Lassa fever situation report for epi week 34 of 2026 states that 253 deaths have been reported cumulatively, with a case fatality rate of 24.0%, and that 24 states have recorded at least one confirmed case across 118 Local Government Areas. Both parts of the claim match what that report says. The figures are cumulative for 2026 up to 23 August, so they will have moved since.",
+    "simpleExplanation": "Nigeria's disease control centre reported 253 Lassa fever deaths across 24 states in 2026, up to late August. The claim matches that report.",
     "unknowns": [
-      "PLACEHOLDER — curator must list what the cited notice leaves open, such as which categories of shop are covered."
+      "How many deaths have been reported since 23 August 2026, the last week this report covers.",
+      "Whether the message was describing this year or an earlier outbreak."
     ],
-    "action": "PLACEHOLDER — curator must write a next step grounded in the cited excerpt, or leave this empty to use the generic caution.",
+    "action": "Check the NCDC situation reports page for the most recent week before repeating the figures.",
     "actionIsGeneric": false,
     "sources": [
-      { "id": "lagos-levy-notice-PLACEHOLDER", "relation": "supports" }
+      { "id": "ncdc-lassa-sitrep-w34-2026-burden", "relation": "supports" },
+      { "id": "ncdc-lassa-sitrep-w33-2026", "relation": "context" }
     ],
-    "placeholder": true
+    "placeholder": false
   },
   {
-    "id": "seed-lassa-cure-rumour",
-    "claim": "A voice note is going round saying the health authorities have confirmed a herbal mixture cures Lassa fever and no one needs to go to hospital.",
-    "normalizedClaim": "Nigerian health authorities have confirmed a herbal mixture cures Lassa fever, making hospital treatment unnecessary.",
+    "id": "seed-lassa-herbal-cure",
+    "claim": "A voice note is going round saying the health authorities have confirmed a herbal mixture cures Lassa fever and that nobody needs to go to hospital for it any more.",
+    "normalizedClaim": "Nigerian health authorities have confirmed that a herbal mixture cures Lassa fever, so hospital treatment is no longer necessary.",
     "jurisdiction": "NG",
     "topic": "disease_outbreaks",
     "status": "contradicted",
-    "explanation": "PLACEHOLDER — curator must write what the cited situation report actually states, and how it contradicts this claim.",
-    "simpleExplanation": "PLACEHOLDER — curator must write the same finding in shorter words, introducing no fact the excerpt does not carry.",
+    "explanation": "The NCDC's own recommendation in its Lassa fever situation report for epi week 34 of 2026 tells healthcare workers to maintain high suspicion for Lassa fever and to initiate timely referral and treatment. That is the opposite of saying hospital care is unnecessary. The same report records a case fatality rate of 24.0% for 2026, and names late presentation of cases as a reason that rate is high. Nothing in the report mentions a herbal cure.",
+    "simpleExplanation": "The NCDC tells health workers to refer and treat Lassa fever cases promptly. It does not describe any herbal cure, and delay is one reason the death rate is high.",
     "unknowns": [
-      "PLACEHOLDER — curator must list what the cited report leaves open."
+      "Which group or person the voice note was attributed to.",
+      "Whether the message referred to a specific product being sold."
     ],
-    "action": "",
-    "actionIsGeneric": true,
+    "action": "Do not share the voice note, and contact the NCDC on its toll-free line 6232 to confirm anything about Lassa fever treatment.",
+    "actionIsGeneric": false,
     "sources": [
-      { "id": "ncdc-sitrep-PLACEHOLDER", "relation": "conflicts" }
+      { "id": "ncdc-lassa-sitrep-w34-2026-guidance", "relation": "conflicts" },
+      { "id": "ncdc-lassa-sitrep-w34-2026-burden", "relation": "context" }
     ],
-    "placeholder": true
+    "placeholder": false
   },
   {
     "id": "seed-unlisted-local-fee",

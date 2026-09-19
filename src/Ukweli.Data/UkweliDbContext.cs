@@ -13,6 +13,15 @@ public class UkweliDbContext(DbContextOptions<UkweliDbContext> options) : DbCont
     /// <summary>Stored results. Holds the normalised claim only, never raw input.</summary>
     public DbSet<ClaimAnalysis> ClaimAnalyses => Set<ClaimAnalysis>();
 
+    /// <summary>Accounts. Email and nothing else — auth gates saved history only.</summary>
+    public DbSet<AuthUser> AuthUsers => Set<AuthUser>();
+
+    /// <summary>Single-use sign-in links, stored as hashes.</summary>
+    public DbSet<MagicLinkToken> MagicLinkTokens => Set<MagicLinkToken>();
+
+    /// <summary>Live sessions, keyed by the hash of the cookie value.</summary>
+    public DbSet<AuthSession> AuthSessions => Set<AuthSession>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -91,6 +100,36 @@ public class UkweliDbContext(DbContextOptions<UkweliDbContext> options) : DbCont
 
             // "My past checks", newest first (Phase 4).
             analysis.HasIndex(a => new { a.UserId, a.CreatedAt });
+        });
+
+        modelBuilder.Entity<AuthUser>(user =>
+        {
+            user.ToTable("auth_users");
+            user.HasKey(u => u.Id);
+            user.Property(u => u.Id).HasMaxLength(64);
+            user.Property(u => u.Email).HasMaxLength(320).IsRequired();
+            // One account per address; the email is the identity.
+            user.HasIndex(u => u.Email).IsUnique();
+        });
+
+        modelBuilder.Entity<MagicLinkToken>(token =>
+        {
+            token.ToTable("magic_link_tokens");
+            token.HasKey(t => t.Id);
+            token.Property(t => t.Id).HasMaxLength(64);
+            token.Property(t => t.Email).HasMaxLength(320).IsRequired();
+            token.Property(t => t.TokenHash).HasMaxLength(64).IsRequired();
+            // Verification looks the token up by hash, never by email.
+            token.HasIndex(t => t.TokenHash).IsUnique();
+        });
+
+        modelBuilder.Entity<AuthSession>(session =>
+        {
+            session.ToTable("auth_sessions");
+            session.HasKey(s => s.Id);
+            session.Property(s => s.Id).HasMaxLength(64);
+            session.Property(s => s.UserId).HasMaxLength(64).IsRequired();
+            session.HasIndex(s => s.UserId);
         });
 
         SnakeCaseNaming.Apply(modelBuilder);

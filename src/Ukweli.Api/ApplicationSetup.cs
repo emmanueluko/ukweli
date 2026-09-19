@@ -1,6 +1,7 @@
 using Anthropic;
 using Microsoft.Extensions.Configuration.Memory;
 using Ukweli.Api.Ai;
+using Ukweli.Api.Auth;
 using Ukweli.Evidence;
 using Ukweli.Contracts;
 using Ukweli.Data;
@@ -43,6 +44,20 @@ public static class ApplicationSetup
         builder.Services.AddSingleton(_ => new AnthropicClient { ApiKey = options.AnthropicApiKey });
         builder.Services.AddScoped<IAiProvider, AnthropicAiProvider>();
         builder.Services.AddScoped<AnalysisPipeline>();
+
+        builder.Services.AddScoped<CurrentUser>();
+        builder.Services.AddScoped<MagicLinkService>();
+        builder.Services.AddSingleton<RateLimiter>();
+
+        // Resend in production, Mailpit in development — chosen once, here.
+        if (!string.IsNullOrWhiteSpace(options.ResendApiKey))
+        {
+            builder.Services.AddHttpClient<IMailer, ResendMailer>();
+        }
+        else
+        {
+            builder.Services.AddScoped<IMailer, SmtpMailer>();
+        }
         builder.AddUkweliOpenApi();
 
         builder.Services.ConfigureHttpJsonOptions(json =>
@@ -58,10 +73,13 @@ public static class ApplicationSetup
 
     public static WebApplication MapUkweliEndpoints(this WebApplication app)
     {
+        app.UseMiddleware<CurrentUserMiddleware>();
+
         app.MapUkweliOpenApi();
         app.MapHealthEndpoints();
         app.MapSourceEndpoints();
         app.MapAnalyzeEndpoints();
+        app.MapAuthEndpoints();
         return app;
     }
 

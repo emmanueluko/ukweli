@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Ukweli.Api.Ai;
+using Ukweli.Api.Auth;
 using Ukweli.Contracts;
 using Ukweli.Data.Entities;
 using Ukweli.Evidence;
@@ -16,11 +17,28 @@ public static class AnalyzeEndpoints
             AnalyzeService analyze,
             AnalysisPipeline pipeline,
             AnalysisAssembler assembler,
+            RateLimiter rateLimiter,
+            CurrentUser currentUser,
+            HttpContext context,
             ILoggerFactory loggerFactory,
             CancellationToken cancellationToken) =>
         {
             var logger = loggerFactory.CreateLogger("Ukweli.Analyze");
             var started = Stopwatch.GetTimestamp();
+
+            // Per IP, signed in or not: every analysis costs a model call, and
+            // requiring a session to spend that would only mean signing in first.
+            if (!rateLimiter.TryAcquire($"analyze:{RateLimiter.ClientKey(context)}"))
+            {
+                logger.RateLimited("/api/analyze");
+
+                return ApplicationSetup.Problem(
+                    StatusCodes.Status429TooManyRequests,
+                    ErrorCodes.RateLimited,
+                    "You have checked several claims in the last minute. Wait a moment and "
+                    + "try again.",
+                    retryable: true);
+            }
 
             var validation = AnalyzeService.Validate(request);
             if (!validation.IsValid)
@@ -38,13 +56,13 @@ public static class AnalyzeEndpoints
             ClaimAnalysis analysis;
             if (seed is not null)
             {
-                analysis = await analyze.ResolveSeededAsync(seed, userId: null, cancellationToken);
+                analysis = await analyze.ResolveSeededAsync(seed, currentUser.UserId, cancellationToken);
             }
             else
             {
                 try
                 {
-                    analysis = await pipeline.RunAsync(validation.Text, userId: null, cancellationToken);
+                    analysis = await pipeline.RunAsync(validation.Text, currentUser.UserId, cancellationToken);
                 }
                 catch (AiUnavailableException ex)
                 {
@@ -85,6 +103,7 @@ public static class AnalyzeEndpoints
             + "raw text is never persisted or logged.")
         .Produces<AnalysisResponse>()
         .Produces<ApiErrorResponse>(StatusCodes.Status400BadRequest)
+        .Produces<ApiErrorResponse>(StatusCodes.Status429TooManyRequests)
         .Produces<ApiErrorResponse>(StatusCodes.Status503ServiceUnavailable);
 
         app.MapGet("/api/results/{id}", async (

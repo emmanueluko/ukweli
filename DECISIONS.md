@@ -251,3 +251,104 @@ from Phase 0 still passes, which is the point of having written it.
 A forwarded message is attacker-controlled text, and both prompts say
 explicitly that anything in it resembling a command is content to assess rather
 than something to obey.
+
+---
+
+## Curation — the corpus became real
+
+**The five shipped sources are genuine NCDC situation reports.** Each PDF was
+downloaded, its text extracted, and the excerpt copied verbatim. `make
+verify-sources` passes for the first time: five records, zero placeholders,
+every URL answering 200.
+
+**`payments_levies` has no sources, and nothing was invented to give it one.**
+`lagosstate.gov.ng/services/payments_levies` renders in JavaScript;
+`finance.lagosstate.gov.ng` and `landsbureau.lagosstate.gov.ng` returned HTTP
+522; `lirs.gov.ng` sits behind a bot check. A levy claim therefore returns
+`insufficient_evidence`, which is the correct answer for a store that holds
+nothing on the subject.
+
+**Where a listing and a document disagree, the document wins.** The NCDC index
+labels one report "Week 33" while the report itself says "Epi Week 34: 17th –
+23rd August 2026". The title records what the document says, because that is
+what a reader will see when they follow the link.
+
+**Two records cite the same PDF with different excerpts.** An excerpt must be a
+contiguous verbatim passage, so the Lassa report's case figures and its
+recommendation to refer and treat promptly are separate records. That is also
+what lets one claim be checked against more than one passage.
+
+**The test that asserted the corpus was uncurated now asserts the opposite.**
+It existed to stop anyone quieting a failing build by inventing evidence; with
+the corpus genuinely curated, it now asserts that every record is real and the
+whole store validates.
+
+**Unresolved: the NCDC reports carry a redistribution restriction** — "The
+report may not be used, published, or redistributed to the public." Ukweli
+quotes short excerpts with attribution and links to the original. This has not
+been cleared with the NCDC and is recorded in the README and the data README so
+it is not discovered after deployment.
+
+---
+
+## Phase 4 — Auth slice
+
+**Only the hash of every token is stored**, for both sign-in links and
+sessions. A database backup then contains nothing that can sign anyone in.
+Plain SHA-256 is correct here: unlike a password, a token has full entropy, so
+there is nothing to brute-force and no need for a slow KDF.
+
+**Requesting a sign-in link always answers 202**, whether or not the address is
+known. Answering differently would turn the endpoint into a way to discover who
+has an account.
+
+**With `AUTH_ENABLED=false` the auth routes are not mapped at all**, so they
+answer 404 rather than 401. Nothing else in the application behaves
+differently, and the tests assert that the public routes and analyze still work
+either way.
+
+**The rate limit applies whether or not the caller is signed in.** Each analysis
+costs a model call, and requiring a session to spend that would only mean an
+attacker signs in first. It is keyed on the forwarded client address when one
+is present, because behind Caddy the socket address is the proxy.
+
+**The rate limiter is in memory, which is a real limitation.** Behind more than
+one instance each would keep its own count and the effective limit would
+multiply. A shared store is the fix; it is not warranted for a single container
+and the constraint is documented in the class.
+
+**No email address appears in any log message.** `AuthLog` is source-generated
+and has no overload that accepts one — who asked to sign in is not something
+the logs need to know, and a log outlives the request.
+
+**Signing out deletes the session row** rather than flagging it, so a
+signed-out session stops existing instead of lingering as a row that might be
+honoured again.
+
+---
+
+## Phase 5 — Production packaging
+
+**Migrations run in the container entrypoint, not at application start.** A
+failed migration then stops the container outright, instead of leaving an API
+serving against a schema it does not match. The API takes a `--migrate-only`
+flag for exactly this.
+
+**Project files are copied and restored before the source**, so a source-only
+change reuses the cached restore layer instead of re-downloading every package.
+
+**The API image runs as a non-root user** and carries only the runtime and the
+published output — the SDK, the NuGet cache and the source stay in the build
+stage.
+
+**The prompts ship beside the binaries** rather than being embedded, because
+they are read at runtime and are part of what `modelVersion` names.
+
+**Caddy serves the API and the web app on one origin.** That is what lets the
+session cookie be `SameSite=Lax` and still work, and it removes CORS entirely.
+
+**Postgres is not published to the host in production** — only the API needs to
+reach it.
+
+**nginx falls back to `index.html`** for unknown paths, because `/r/{id}` share
+links are routes rather than files and must reach the app rather than a 404.

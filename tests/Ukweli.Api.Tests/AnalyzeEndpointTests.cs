@@ -17,8 +17,8 @@ namespace Ukweli.Api.Tests;
 [Collection("database")]
 public class AnalyzeEndpointTests : IAsyncLifetime, IDisposable
 {
-    private const string SupportedSeed = "seed-lagos-shop-levy";
-    private const string ContradictedSeed = "seed-lassa-cure-rumour";
+    private const string SupportedSeed = "seed-lassa-death-toll";
+    private const string ContradictedSeed = "seed-lassa-herbal-cure";
     private const string InsufficientSeed = "seed-unlisted-local-fee";
 
     private readonly UkweliApiFactory _factory = new();
@@ -56,13 +56,18 @@ public class AnalyzeEndpointTests : IAsyncLifetime, IDisposable
     /// <summary>The seeds cite these ids, so the sources must exist to resolve.</summary>
     private static async Task SeedSourcesAsync(UkweliDbContext db)
     {
+        // The seeds cite these NCDC reports; the rows must exist to resolve.
         var required = new[]
         {
-            ("lagos-levy-notice-PLACEHOLDER", "Lagos State Government", Jurisdiction.NgLa, Topic.PaymentsLevies),
-            ("ncdc-sitrep-PLACEHOLDER", "Nigeria Centre for Disease Control and Prevention", Jurisdiction.Ng, Topic.DiseaseOutbreaks),
+            ("ncdc-lassa-sitrep-w34-2026-burden",
+                "Cumulatively, 253 deaths have been reported with a Case Fatality Rate (CFR) of 24.0%."),
+            ("ncdc-lassa-sitrep-w34-2026-guidance",
+                "Healthcare Workers- Maintain high suspicion for Lassa fever and initiate timely referral and treatment."),
+            ("ncdc-lassa-sitrep-w33-2026",
+                "In week 33, the number of new confirmed cases increased from 4 reported in epi week 32 of 2026 to 14."),
         };
 
-        foreach (var (id, issuer, jurisdiction, topic) in required)
+        foreach (var (id, excerpt) in required)
         {
             if (await db.Sources.AnyAsync(source => source.Id == id))
             {
@@ -72,14 +77,17 @@ public class AnalyzeEndpointTests : IAsyncLifetime, IDisposable
             db.Sources.Add(new Source
             {
                 Id = id,
-                Issuer = issuer,
-                Title = "PLACEHOLDER",
+                Issuer = "Nigeria Centre for Disease Control and Prevention",
+                Title = "Lassa Fever Situation Report",
                 SourceType = SourceType.PrimaryOfficial,
-                Jurisdiction = jurisdiction,
-                Topic = topic,
-                Url = "PLACEHOLDER",
-                Excerpt = "PLACEHOLDER — curator must replace with verbatim excerpt",
-                Placeholder = true,
+                Jurisdiction = Jurisdiction.Ng,
+                Topic = Topic.DiseaseOutbreaks,
+                PublishedAt = new DateOnly(2026, 8, 22),
+                CheckedAt = new DateOnly(2026, 9, 19),
+                Url = "https://ncdc.gov.ng/themes/common/files/sitreps/b0fedda076a0b27d21d5a09678dd69a0.pdf",
+                CollectionUrl = "https://ncdc.gov.ng/diseases/sitreps",
+                Excerpt = excerpt,
+                Placeholder = false,
                 Active = true,
             });
         }
@@ -144,7 +152,8 @@ public class AnalyzeEndpointTests : IAsyncLifetime, IDisposable
 
         const string pasted =
             "A voice note is going round saying the health authorities have confirmed a "
-            + "herbal mixture cures Lassa fever and no one needs to go to hospital.";
+            + "herbal mixture cures Lassa fever and that nobody needs to go to hospital for "
+            + "it any more.";
 
         var response = await client.PostAsJsonAsync("/api/analyze", new AnalyzeRequest(pasted, null));
         var body = await response.Content.ReadFromJsonAsync<AnalysisResponse>();
@@ -178,7 +187,8 @@ public class AnalyzeEndpointTests : IAsyncLifetime, IDisposable
 
         const string pasted =
             "A voice note is going round saying the health authorities have confirmed a "
-            + "herbal mixture cures Lassa fever and no one needs to go to hospital.";
+            + "herbal mixture cures Lassa fever and that nobody needs to go to hospital for "
+            + "it any more.";
 
         var response = await client.PostAsJsonAsync("/api/analyze", new AnalyzeRequest(pasted, null));
         var body = await response.Content.ReadFromJsonAsync<AnalysisResponse>();
@@ -196,7 +206,8 @@ public class AnalyzeEndpointTests : IAsyncLifetime, IDisposable
 
         const string decorated =
             "  ➡️ A voice note is going round saying the health authorities have confirmed a "
-            + "herbal mixture cures Lassa fever and no one needs to go to hospital. 😱  ";
+            + "herbal mixture cures Lassa fever and that nobody needs to go to hospital for "
+            + "it any more. 😱  ";
 
         var response = await client.PostAsJsonAsync(
             "/api/analyze", new AnalyzeRequest(decorated, null));

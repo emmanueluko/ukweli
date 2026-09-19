@@ -1,0 +1,17 @@
+# Build output and dependencies are rebuilt inside the image.
+**/bin/
+**/obj/
+**/node_modules/
+**/dist/
+.git/
+.github/
+.turbo/
+tests/
+
+# Never copy real credentials into an image layer.
+.env
+.env.*
+!.env.example
+
+*.log
+.DS_Store

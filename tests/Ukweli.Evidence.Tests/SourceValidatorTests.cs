@@ -74,18 +74,33 @@ public class SourceValidatorTests
     }
 
     [Fact]
-    public void TheShippedCorpusIsStillUncurated()
+    public void TheShippedCorpusIsCuratedAndValid()
     {
-        // A guard against someone "fixing" the failing build by inventing
-        // evidence. If this ever fails, a human genuinely curated the corpus —
-        // replace it with an assertion that the records are valid.
-        var records = SourceCorpus.LoadFromFile(SourceCorpus.DefaultPath());
+        // This test used to assert the opposite — that every record was still a
+        // placeholder — as a guard against anyone quieting a failing build by
+        // inventing evidence. The corpus has since been curated from the real
+        // NCDC situation reports, so it now asserts what must stay true: every
+        // record is real, and the whole store passes validation.
+        var records = SourceMapping.Normalise(SourceCorpus.LoadFromFile(SourceCorpus.DefaultPath()));
 
         Assert.NotEmpty(records);
-        Assert.All(records, record => Assert.True(SourceValidator.LooksUncurated(record)));
-        Assert.Contains(
-            SourceValidator.Validate(records),
-            p => p.Code == SourceProblemCodes.Placeholder);
+        Assert.All(records, record => Assert.False(
+            SourceValidator.LooksUncurated(record),
+            $"'{record.Id}' is not curated."));
+        Assert.Empty(SourceValidator.Validate(records));
+    }
+
+    [Fact]
+    public void EveryShippedSourceCitesASpecificDocument()
+    {
+        var records = SourceCorpus.LoadFromFile(SourceCorpus.DefaultPath());
+
+        // A verdict citing an index cites nothing in particular.
+        Assert.All(records, record =>
+        {
+            Assert.True(SourceValidator.IsHttpUrl(record.Url), $"'{record.Id}' has no document URL.");
+            Assert.NotEqual(record.Url.TrimEnd('/'), record.CollectionUrl?.TrimEnd('/'));
+        });
     }
 
     [Fact]

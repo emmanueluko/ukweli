@@ -20,9 +20,12 @@ public sealed class UkweliApiFactory : WebApplicationFactory<Program>
 
     private readonly string _databaseUrl;
     private readonly string _anthropicApiKey;
+    private readonly bool _authEnabled;
 
-    public UkweliApiFactory(string? databaseUrl = null, string? anthropicApiKey = null)
+    public UkweliApiFactory(
+        string? databaseUrl = null, string? anthropicApiKey = null, bool authEnabled = false)
     {
+        _authEnabled = authEnabled;
         // TEST_DATABASE_URL lets CI point at its own service container.
         _databaseUrl = databaseUrl
             ?? Environment.GetEnvironmentVariable("TEST_DATABASE_URL")
@@ -35,7 +38,7 @@ public sealed class UkweliApiFactory : WebApplicationFactory<Program>
         builder.UseEnvironment("Testing");
         builder.UseSetting("DATABASE_URL", _databaseUrl);
         builder.UseSetting("ANTHROPIC_API_KEY", _anthropicApiKey);
-        builder.UseSetting("AUTH_ENABLED", "false");
+        builder.UseSetting("AUTH_ENABLED", _authEnabled ? "true" : "false");
         // PORT is left blank: WebApplicationFactory supplies its own server.
         builder.UseSetting("PORT", string.Empty);
     }

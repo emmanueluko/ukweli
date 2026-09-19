@@ -10,7 +10,7 @@ CLI := src/Ukweli.Cli
 
 .DEFAULT_GOAL := help
 .PHONY: help setup dev dev-stop dev-logs build test test-watch lint format \
-        db-migrate db-generate db-seed verify-sources api web clean
+        db-migrate db-generate db-seed verify-sources api web clean prod prod-stop prod-logs
 
 help: ## Show available targets
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -66,6 +66,16 @@ db-seed: ## Load the curated store into the database (idempotent)
 
 verify-sources: ## Validate the curated store (fails while any placeholder remains)
 	dotnet run --project $(CLI) -- verify-sources
+
+prod: ## Build and start the production stack (postgres, api, web, caddy)
+	docker compose up -d --build
+	@echo "Caddy is serving https://$${UKWELI_DOMAIN:-localhost}"
+
+prod-stop: ## Stop the production stack
+	docker compose down
+
+prod-logs: ## Tail the production logs
+	docker compose logs -f
 
 clean: ## Remove build output
 	dotnet clean

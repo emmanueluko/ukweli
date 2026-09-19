@@ -1,0 +1,28 @@
+# Caddy obtains and renews the certificate itself; there is nothing to configure
+# beyond the hostname.
+{$UKWELI_DOMAIN} {
+	encode gzip
+
+	# The API and the web app share one origin. That is what lets the session
+	# cookie be SameSite=Lax and still work, and it removes CORS entirely.
+	handle /api/* {
+		reverse_proxy api:8787
+	}
+
+	handle /healthz {
+		reverse_proxy api:8787
+	}
+
+	handle {
+		reverse_proxy web:80
+	}
+
+	header {
+		# Ukweli shows quoted excerpts from elsewhere; it should never be
+		# framed by another site, and its content type should not be guessed.
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+}
