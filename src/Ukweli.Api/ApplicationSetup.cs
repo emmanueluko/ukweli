@@ -31,6 +31,8 @@ public static class ApplicationSetup
         }
 
         builder.Services.AddUkweliData(options.DatabaseUrl);
+        builder.Services.AddScoped<SourceRepository>();
+        builder.AddUkweliOpenApi();
 
         builder.Services.ConfigureHttpJsonOptions(json =>
         {
@@ -45,7 +47,9 @@ public static class ApplicationSetup
 
     public static WebApplication MapUkweliEndpoints(this WebApplication app)
     {
+        app.MapUkweliOpenApi();
         app.MapHealthEndpoints();
+        app.MapSourceEndpoints();
         return app;
     }
 

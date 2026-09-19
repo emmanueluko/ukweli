@@ -1,0 +1,32 @@
+[
+  {
+    "id": "lagos-levy-notice-PLACEHOLDER",
+    "issuer": "Lagos State Government",
+    "title": "PLACEHOLDER — curator must replace with the document's own title",
+    "sourceType": "primary_official",
+    "jurisdiction": "NG-LA",
+    "topic": "payments_levies",
+    "publishedAt": null,
+    "checkedAt": null,
+    "url": "PLACEHOLDER — curator must replace with the specific notice or PDF URL",
+    "collectionUrl": "https://lagosstate.gov.ng/services/payments_levies",
+    "excerpt": "PLACEHOLDER — curator must replace with verbatim excerpt",
+    "placeholder": true,
+    "active": true
+  },
+  {
+    "id": "ncdc-sitrep-PLACEHOLDER",
+    "issuer": "Nigeria Centre for Disease Control and Prevention",
+    "title": "PLACEHOLDER — curator must replace with the sitrep's own title",
+    "sourceType": "primary_official",
+    "jurisdiction": "NG",
+    "topic": "disease_outbreaks",
+    "publishedAt": null,
+    "checkedAt": null,
+    "url": "PLACEHOLDER — curator must replace with the specific dated sitrep PDF URL",
+    "collectionUrl": "https://ncdc.gov.ng/diseases/sitreps",
+    "excerpt": "PLACEHOLDER — curator must replace with verbatim excerpt",
+    "placeholder": true,
+    "active": true
+  }
+]

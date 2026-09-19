@@ -49,8 +49,29 @@ in isolation. The model drafts text; the server owns every safety decision.
 
 ## Development
 
-Full setup instructions, the environment variable table, and curation
-instructions land with Phase 5. Build status: Phase 0 (scaffold) in progress.
+Requires .NET 10, Docker and Node 22.
+
+```sh
+cp .env.example .env          # fill in ANTHROPIC_API_KEY when you have one
+make setup                    # restore .NET tools, packages and web deps
+docker compose -f docker-compose.dev.yml up -d
+make db-migrate && make db-seed
+make dev                      # API on :8787, Swagger on :8787/swagger
+```
+
+`make` on its own lists every target. `make test` runs the suite; it needs the
+dev Postgres, which the compose file provides along with the `ukweli_test`
+database the integration tests use.
+
+### The curated store
+
+`src/Ukweli.Evidence/data/sources.json` is the whole corpus. It ships as
+**placeholders**, and `make verify-sources` fails while any remain — deliberately,
+so uncurated evidence cannot reach a demo. See
+[`src/Ukweli.Evidence/data/README.md`](src/Ukweli.Evidence/data/README.md) for
+what a curator replaces.
+
+Build status: Phases 0 and 1 complete.
 
 ## Project documents
 
