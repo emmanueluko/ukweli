@@ -52,8 +52,7 @@ public static class SeedCommand
         string connectionString;
         try
         {
-            connectionString = DatabaseUrl.ToConnectionString(
-                Environment.GetEnvironmentVariable("DATABASE_URL"));
+            connectionString = DatabaseUrl.ToConnectionString(Configuration.DatabaseUrl());
         }
         catch (ArgumentException ex)
         {

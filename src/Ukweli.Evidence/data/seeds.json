@@ -1,0 +1,59 @@
+[
+  {
+    "id": "seed-lagos-shop-levy",
+    "claim": "Someone forwarded a message saying every small shop in Lagos must pay a new state levy before the end of this month or be sealed.",
+    "normalizedClaim": "Lagos State requires every small shop to pay a new levy this month or be sealed.",
+    "jurisdiction": "NG-LA",
+    "topic": "payments_levies",
+    "status": "supported",
+    "explanation": "PLACEHOLDER — curator must write what the cited notice actually says about this levy, quoting nothing beyond the recorded excerpt.",
+    "simpleExplanation": "PLACEHOLDER — curator must write the same finding in shorter words, introducing no fact the excerpt does not carry.",
+    "unknowns": [
+      "PLACEHOLDER — curator must list what the cited notice leaves open, such as which categories of shop are covered."
+    ],
+    "action": "PLACEHOLDER — curator must write a next step grounded in the cited excerpt, or leave this empty to use the generic caution.",
+    "actionIsGeneric": false,
+    "sources": [
+      { "id": "lagos-levy-notice-PLACEHOLDER", "relation": "supports" }
+    ],
+    "placeholder": true
+  },
+  {
+    "id": "seed-lassa-cure-rumour",
+    "claim": "A voice note is going round saying the health authorities have confirmed a herbal mixture cures Lassa fever and no one needs to go to hospital.",
+    "normalizedClaim": "Nigerian health authorities have confirmed a herbal mixture cures Lassa fever, making hospital treatment unnecessary.",
+    "jurisdiction": "NG",
+    "topic": "disease_outbreaks",
+    "status": "contradicted",
+    "explanation": "PLACEHOLDER — curator must write what the cited situation report actually states, and how it contradicts this claim.",
+    "simpleExplanation": "PLACEHOLDER — curator must write the same finding in shorter words, introducing no fact the excerpt does not carry.",
+    "unknowns": [
+      "PLACEHOLDER — curator must list what the cited report leaves open."
+    ],
+    "action": "",
+    "actionIsGeneric": true,
+    "sources": [
+      { "id": "ncdc-sitrep-PLACEHOLDER", "relation": "conflicts" }
+    ],
+    "placeholder": true
+  },
+  {
+    "id": "seed-unlisted-local-fee",
+    "claim": "I heard that from next week every household in my area has to pay a new waste collection fee directly to a collector who comes to the door.",
+    "normalizedClaim": "Households must pay a new waste collection fee directly to a door-to-door collector from next week.",
+    "jurisdiction": null,
+    "topic": "payments_levies",
+    "status": "insufficient_evidence",
+    "explanation": "The curated store holds nothing about a door-to-door waste collection fee, and the claim does not say which state or local government area it refers to. That is not evidence the claim is false — it means Ukweli cannot check it. Absence of a record here says nothing either way about what any authority has announced.",
+    "simpleExplanation": "Ukweli has no source covering this, so it cannot say whether it is true or false.",
+    "unknowns": [
+      "Which state or local government area the claim refers to.",
+      "Which body is said to have authorised the fee.",
+      "Whether any official notice about this fee exists at all."
+    ],
+    "action": "",
+    "actionIsGeneric": true,
+    "sources": [],
+    "placeholder": false
+  }
+]

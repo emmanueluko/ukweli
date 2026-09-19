@@ -31,11 +31,7 @@ public static class SourceEndpoints
         .Produces<SourceResponse>()
         .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound);
 
-        app.MapGet("/api/examples", (CancellationToken _) =>
-            // Populated in Phase 2, where the seeded claims are defined. An
-            // empty list is the honest answer until then, and lets the web
-            // placeholder call this endpoint today.
-            Results.Ok(Array.Empty<ExampleClaimResponse>()))
+        app.MapGet("/api/examples", (SeedStore seeds) => Results.Ok(seeds.Examples))
         .WithName("ListExamples")
         .WithSummary("List the example claims offered on the home screen")
         .Produces<IReadOnlyList<ExampleClaimResponse>>();

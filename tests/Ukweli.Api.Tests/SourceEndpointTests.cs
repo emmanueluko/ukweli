@@ -25,7 +25,6 @@ public class SourceEndpointTests : IAsyncLifetime, IDisposable
     {
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<UkweliDbContext>();
-        await db.Database.EnsureCreatedAsync();
 
         await UpsertAsync(db, new Source
         {
@@ -173,18 +172,5 @@ public class SourceEndpointTests : IAsyncLifetime, IDisposable
         var response = await client.GetAsync("/api/sources/%20");
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-    }
-
-    [Fact]
-    public async Task ListsExamplesAsAnEmptyArrayUntilPhase2()
-    {
-        using var client = _factory.CreateClient();
-
-        var response = await client.GetAsync("/api/examples");
-        var body = await response.Content.ReadFromJsonAsync<List<ExampleClaimResponse>>();
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.NotNull(body);
-        Assert.Empty(body);
     }
 }

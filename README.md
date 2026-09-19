@@ -71,7 +71,7 @@ so uncurated evidence cannot reach a demo. See
 [`src/Ukweli.Evidence/data/README.md`](src/Ukweli.Evidence/data/README.md) for
 what a curator replaces.
 
-Build status: Phases 0 and 1 complete.
+Build status: Phases 0-2 complete.
 
 ## Project documents
 

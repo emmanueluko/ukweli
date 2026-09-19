@@ -1,4 +1,4 @@
-namespace Ukweli.Api;
+namespace Ukweli.Data;
 
 /// <summary>
 /// Reads a <c>.env</c> file into a dictionary of configuration values.

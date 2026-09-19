@@ -1,3 +1,5 @@
+using Ukweli.Data;
+
 namespace Ukweli.Api.Tests;
 
 /// <summary>

@@ -133,3 +133,66 @@ hand-written conventions on them only produces edits the next migration undoes.
 `Microsoft.AspNetCore.OpenApi` document at `/openapi/v1.json`. The demo is a
 public claim checker with no admin surface, so there is nothing to gain from
 publishing a schema in production.
+
+---
+
+## Phase 2 — Deterministic analyze slice
+
+**Two of the three seeded analyses are placeholders; the third is genuinely
+complete.** `seed-unlisted-local-fee` returns `insufficient_evidence`, and its
+explanation asserts nothing about the world — only that the curated store holds
+nothing on the subject, which is true and stays true. The `supported` and
+`contradicted` seeds cannot be completed without real curated sources to rest
+on, so their prose carries the placeholder marker like the corpus does.
+
+**`sourceRelations` is a column of its own, beside `sourceIds`.** The
+specification defines `sourceIds` as a plain string array, and that column is
+exactly that. But a single verdict cannot express a mixed result where one
+source supports and another conflicts, so the relation is recorded per source
+rather than inferred from the status on read. Inferring it would have made
+`mixed_unclear` unrepresentable.
+
+**`unknowns`, `sourceIds` and `sourceRelations` are `jsonb`, not `text`.** EF
+Core's default mapping for a converted collection is `text`; the specification's
+data model says `jsonb`, and the difference is real — Postgres validates the
+shape on write and the columns stay queryable.
+
+**Seeded analyses are persisted on first use, not up front.** A seeded result
+then has a real id, a real row and a real `/r/{id}` link like any other, so the
+share and reload paths are exercised by the demo rather than special-cased.
+
+**Safety rule 7 is applied to hand-written seeds too.** A seed's action goes
+through the same allowlist as a model's. Two of the three seeds consequently
+show the generic caution, which is the correct outcome while their sources are
+uncurated.
+
+**`shareText` carries neither the raw input nor the normalised claim.** The
+specification forbids the user's input; the normalised claim is that input with
+the whitespace tidied, so including it would forward the rumour just as
+effectively. What it carries is the verdict, the caveat, the source URL and the
+link back.
+
+**An analysis id is nanoid(10) over a 64-character alphabet.** Not a secret, but
+about 59 bits — far too sparse to walk. A result link is shareable, and an
+enumerable one would expose what other people checked.
+
+**Malformed result ids are rejected before the database is touched**, so a
+client scanning `/r/{id}` cannot turn a 404 into query load.
+
+**Claim text is never logged.** `AnalysisLog` is source-generated and has no
+overload that accepts claim text — ids, verdicts and timings only. A civic claim
+is often someone's private circumstance, and logs outlive the request.
+
+**Free text returns 503, not a guess.** Until Phase 3 exists, saying that
+checking a new claim is unavailable is the honest answer; inventing a verdict
+would not be.
+
+**`DotEnv` moved from `Ukweli.Api` to `Ukweli.Data`.** The CLI needs it too:
+without it `make db-seed` failed on a fresh clone unless the operator exported
+`DATABASE_URL` by hand, having already filled in the `.env` the README tells
+them to create.
+
+**Integration tests run the real migrations, not `EnsureCreated`.** The latter
+builds tables from the model and writes no migration history, so the test schema
+silently stops matching what a deployment applies — which is exactly how the
+`claim_analyses` table came to be missing from the test database.

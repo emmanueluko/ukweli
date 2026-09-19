@@ -7,8 +7,11 @@ namespace Ukweli.Data;
 /// <summary>The application's EF Core context.</summary>
 public class UkweliDbContext(DbContextOptions<UkweliDbContext> options) : DbContext(options)
 {
-    /// <summary>The curated evidence store. <c>claim_analyses</c> arrives in Phase 2.</summary>
+    /// <summary>The curated evidence store.</summary>
     public DbSet<Source> Sources => Set<Source>();
+
+    /// <summary>Stored results. Holds the normalised claim only, never raw input.</summary>
+    public DbSet<ClaimAnalysis> ClaimAnalyses => Set<ClaimAnalysis>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -42,6 +45,52 @@ public class UkweliDbContext(DbContextOptions<UkweliDbContext> options) : DbCont
 
             // Retrieval filters on exactly these three columns.
             source.HasIndex(s => new { s.Active, s.Jurisdiction, s.Topic });
+        });
+
+        modelBuilder.Entity<ClaimAnalysis>(analysis =>
+        {
+            analysis.ToTable("claim_analyses");
+            analysis.HasKey(a => a.Id);
+
+            analysis.Property(a => a.Id).HasMaxLength(16);
+            analysis.Property(a => a.UserId).HasMaxLength(128);
+            analysis.Property(a => a.NormalizedClaim).IsRequired();
+            analysis.Property(a => a.Explanation).IsRequired();
+            analysis.Property(a => a.SimpleExplanation).IsRequired();
+            analysis.Property(a => a.Action).IsRequired();
+            analysis.Property(a => a.SeedId).HasMaxLength(128);
+            analysis.Property(a => a.ModelVersion).HasMaxLength(128).IsRequired();
+
+            analysis.Property(a => a.Status)
+                .HasConversion(EnumConversions.For<VerdictStatus>()).HasMaxLength(32).IsRequired();
+
+            // Nullable: a claim that names no place has no jurisdiction, and
+            // guessing one would be inventing scope the claim never had.
+            analysis.Property(a => a.Jurisdiction)
+                .HasConversion(EnumConversions.NullableFor<Jurisdiction>()).HasMaxLength(16);
+
+            // jsonb, as the specification's data model says — not text. The
+            // difference matters: Postgres validates the shape on write, and
+            // these columns stay queryable.
+            analysis.Property(a => a.Unknowns)
+                .HasConversion(JsonConversions.ForList<string>())
+                .HasColumnType("jsonb")
+                .Metadata.SetValueComparer(JsonConversions.ListComparer<string>());
+
+            analysis.Property(a => a.SourceIds)
+                .HasConversion(JsonConversions.ForList<string>())
+                .HasColumnType("jsonb")
+                .Metadata.SetValueComparer(JsonConversions.ListComparer<string>());
+
+            analysis.Property(a => a.SourceRelations)
+                .HasConversion(JsonConversions.ForDictionary<SourceRelation>())
+                .HasColumnType("jsonb")
+                .Metadata.SetValueComparer(JsonConversions.DictionaryComparer<SourceRelation>());
+
+            analysis.Property(a => a.IsSeeded).HasDefaultValue(false);
+
+            // "My past checks", newest first (Phase 4).
+            analysis.HasIndex(a => new { a.UserId, a.CreatedAt });
         });
 
         SnakeCaseNaming.Apply(modelBuilder);
