@@ -28,6 +28,16 @@ RUN dotnet publish src/Ukweli.Api/Ukweli.Api.csproj -c Release -o /app/api --no-
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 
+# The runtime image is deliberately minimal and ships neither of these:
+#   libgssapi-krb5-2 — Npgsql loads it for GSSAPI, and the seed command fails
+#     outright without it ("libgssapi_krb5.so.2: cannot open shared object file")
+#   curl — the container's own health check needs a client inside the container,
+#     because the API port is exposed to the compose network but not published
+#     to the host
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends libgssapi-krb5-2 curl \
+ && rm -rf /var/lib/apt/lists/*
+
 # The prompts are read at runtime and are part of what the model version names,
 # so they ship beside the binaries rather than being baked into them.
 COPY --from=build /app/api ./

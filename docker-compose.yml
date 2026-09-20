@@ -39,7 +39,8 @@ services:
     expose:
       - '8787'
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:8787/healthz || exit 1']
+      # Runs inside the container: the port is on the compose network, not the host.
+      test: ['CMD-SHELL', 'curl -fsS http://localhost:8787/healthz | grep -q "\"db\":true"']
       interval: 30s
       timeout: 5s
       retries: 5

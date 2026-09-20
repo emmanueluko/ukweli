@@ -41,6 +41,55 @@ jobs:
           echo "${{ secrets.DEPLOY_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
 
+      - name: Write configuration from repository secrets
+        env:
+          # Secrets: values that would do harm if seen.
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          # Variables: settings that are merely configuration. Kept as repository
+          # variables so they can be read back and checked, which a secret cannot.
+          UKWELI_DOMAIN: ${{ vars.UKWELI_DOMAIN }}
+          UKWELI_APEX: ${{ vars.UKWELI_APEX }}
+          APP_URL: ${{ vars.APP_URL }}
+          AUTH_ENABLED: ${{ vars.AUTH_ENABLED }}
+          RATE_LIMIT_ANALYZE_PER_MIN: ${{ vars.RATE_LIMIT_ANALYZE_PER_MIN }}
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          # Assembled into a file rather than echoed, so no value is ever a
+          # command argument or a log line. GitHub masks secrets in logs, but
+          # not writing them there at all is the stronger guarantee.
+          umask 077
+          {
+            printf 'POSTGRES_PASSWORD=%s\n' "$POSTGRES_PASSWORD"
+            printf 'POSTGRES_USER=%s\n' "ukweli"
+            printf 'POSTGRES_DB=%s\n' "ukweli"
+            printf 'UKWELI_DOMAIN=%s\n' "$UKWELI_DOMAIN"
+            printf 'UKWELI_APEX=%s\n' "$UKWELI_APEX"
+            printf 'APP_URL=%s\n' "$APP_URL"
+            printf 'ANTHROPIC_API_KEY=%s\n' "$ANTHROPIC_API_KEY"
+            printf 'RATE_LIMIT_ANALYZE_PER_MIN=%s\n' "${RATE_LIMIT_ANALYZE_PER_MIN:-10}"
+            printf 'AUTH_ENABLED=%s\n' "${AUTH_ENABLED:-false}"
+            printf 'BETTER_AUTH_SECRET=%s\n' "$BETTER_AUTH_SECRET"
+            printf 'RESEND_API_KEY=%s\n' "$RESEND_API_KEY"
+          } > env.production
+
+          # Refuse to deploy a configuration that cannot work, rather than
+          # discovering it from a container that will not start.
+          for required in POSTGRES_PASSWORD UKWELI_DOMAIN APP_URL; do
+            grep -q "^$required=." env.production || {
+              echo "$required is empty. Set it in repository secrets or variables." >&2
+              exit 1
+            }
+          done
+
+          scp -i ~/.ssh/deploy_key env.production "$USER@$HOST:/opt/ukweli/.env.incoming"
+          ssh -i ~/.ssh/deploy_key "$USER@$HOST" \
+            'chmod 600 /opt/ukweli/.env.incoming && mv /opt/ukweli/.env.incoming /opt/ukweli/.env'
+          shred -u env.production 2>/dev/null || rm -f env.production
+
       - name: Pull, rebuild and restart
         env:
           HOST: ${{ secrets.DEPLOY_HOST }}

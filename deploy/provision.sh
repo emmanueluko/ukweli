@@ -68,8 +68,11 @@ cd "$APP_DIR"
 sg docker -c "docker compose up -d --build" 2>/dev/null || docker compose up -d --build
 
 log "Waiting for the API to report healthy"
+# Checked from inside the container. The API port is published to the compose
+# network only, so curling it from the host fails even when the API is healthy —
+# which looks identical to the API being down.
 for attempt in $(seq 1 60); do
-  if curl -fsS http://localhost:8787/healthz >/dev/null 2>&1; then
+  if docker compose exec -T api curl -fsS http://localhost:8787/healthz 2>/dev/null | grep -q '"db":true'; then
     echo "API is healthy."
     break
   fi
