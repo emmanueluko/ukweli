@@ -67,14 +67,14 @@ public static class AuthEndpoints
             CancellationToken cancellationToken) =>
         {
             var sessionToken = await magicLinks.VerifyAsync(token, cancellationToken);
+            var appUrl = options.AppUrl.TrimEnd('/');
 
             if (sessionToken is null)
             {
-                return ApplicationSetup.Problem(
-                    StatusCodes.Status401Unauthorized,
-                    ErrorCodes.Unauthorized,
-                    "That sign-in link has expired or has already been used. Request a new one.",
-                    retryable: false);
+                // A person followed this from their email client, so they are
+                // sent back to the sign-in screen with an explanation — not
+                // handed a JSON error envelope to interpret.
+                return Results.Redirect($"{appUrl}/sign-in?error=link_expired");
             }
 
             context.Response.Cookies.Append(
@@ -91,12 +91,18 @@ public static class AuthEndpoints
                     Expires = DateTimeOffset.UtcNow.Add(MagicLinkService.SessionLifetime),
                 });
 
-            return Results.Ok(new SignedIn(true));
+            // This endpoint is opened by a human clicking a link in an email,
+            // not by a script, so it answers with a page rather than with JSON.
+            // Returning {"authenticated":true} left people staring at raw JSON
+            // wondering whether it had worked.
+            return Results.Redirect($"{appUrl}/my-checks");
         })
         .WithName("VerifyMagicLink")
         .WithSummary("Exchange a sign-in link for a session")
-        .Produces<SignedIn>()
-        .Produces<ApiErrorResponse>(StatusCodes.Status401Unauthorized);
+        .WithDescription(
+            "Opened from an email. Sets the session cookie and redirects into the app; "
+            + "an expired or reused link redirects to the sign-in screen.")
+        .Produces(StatusCodes.Status302Found);
 
         app.MapPost("/api/auth/sign-out", async (
             MagicLinkService magicLinks,

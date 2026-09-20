@@ -19,7 +19,8 @@ public sealed class ResendMailer(
                 from = $"Ukweli <no-reply@{SendingDomain(options.AppUrl)}>",
                 to = new[] { email },
                 subject = MagicLinkEmail.Subject,
-                text = MagicLinkEmail.Body(linkUrl, MagicLinkService.ValidFor),
+                text = MagicLinkEmail.Text(linkUrl, MagicLinkService.ValidFor),
+                html = MagicLinkEmail.Html(linkUrl, MagicLinkService.ValidFor, options.AppUrl),
             }),
         };
 

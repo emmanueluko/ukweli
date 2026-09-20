@@ -74,7 +74,9 @@ public class MagicLinkRoundTripTests : IDisposable
 
         // 3. Open it.
         var verified = await client.GetAsync($"/api/auth/verify?token={Uri.EscapeDataString(token!)}");
-        Assert.Equal(HttpStatusCode.OK, verified.StatusCode);
+        // A redirect into the app, because a person opened this from their inbox.
+        Assert.Equal(HttpStatusCode.Found, verified.StatusCode);
+        Assert.Contains("/my-checks", verified.Headers.Location!.ToString(), StringComparison.Ordinal);
 
         var cookie = SessionCookie(verified);
         Assert.NotNull(cookie);
@@ -108,12 +110,18 @@ public class MagicLinkRoundTripTests : IDisposable
         var token = await FindTokenAsync(email);
         Assert.NotNull(token);
 
-        var first = await client.GetAsync($"/api/auth/verify?token={Uri.EscapeDataString(token!)}");
-        Assert.Equal(HttpStatusCode.OK, first.StatusCode);
+        using var noRedirect = _factory.CreateClient(
+            new Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactoryClientOptions
+            {
+                AllowAutoRedirect = false,
+            });
+
+        var first = await noRedirect.GetAsync($"/api/auth/verify?token={Uri.EscapeDataString(token!)}");
+        Assert.Contains("/my-checks", first.Headers.Location!.ToString(), StringComparison.Ordinal);
 
         // A link found in a forwarded email, or in a browser history, is spent.
-        var second = await client.GetAsync($"/api/auth/verify?token={Uri.EscapeDataString(token)}");
-        Assert.Equal(HttpStatusCode.Unauthorized, second.StatusCode);
+        var second = await noRedirect.GetAsync($"/api/auth/verify?token={Uri.EscapeDataString(token)}");
+        Assert.Contains("/sign-in?error=link_expired", second.Headers.Location!.ToString(), StringComparison.Ordinal);
     }
 
     [Fact]

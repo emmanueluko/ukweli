@@ -1,4 +1,5 @@
 using System.Net.Mail;
+using System.Net.Mime;
 
 namespace Ukweli.Api.Auth;
 
@@ -24,9 +25,16 @@ public sealed class SmtpMailer(UkweliOptions options, ILogger<SmtpMailer> logger
         using var message = new MailMessage(FromAddress, email)
         {
             Subject = MagicLinkEmail.Subject,
-            Body = MagicLinkEmail.Body(linkUrl, MagicLinkService.ValidFor),
+            // The plain-text part is the body; the HTML rides alongside it, so a
+            // text-only client still gets a working link.
+            Body = MagicLinkEmail.Text(linkUrl, MagicLinkService.ValidFor),
             IsBodyHtml = false,
         };
+
+        message.AlternateViews.Add(AlternateView.CreateAlternateViewFromString(
+            MagicLinkEmail.Html(linkUrl, MagicLinkService.ValidFor, options.AppUrl),
+            null,
+            "text/html"));
 
         await client.SendMailAsync(message, cancellationToken);
 

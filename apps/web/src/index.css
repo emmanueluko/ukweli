@@ -625,3 +625,239 @@ input.field {
     animation-duration: 2s;
   }
 }
+
+/* ── Site header ────────────────────────────────────────────────────── */
+
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px;
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+@media (min-width: 900px) {
+  .site-header {
+    padding: 22px 96px;
+    gap: 28px;
+  }
+}
+
+.site-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+@media (min-width: 900px) {
+  .site-nav {
+    gap: 28px;
+  }
+}
+
+/* Nothing in the header may wrap mid-phrase: "How it works" breaking across
+   three lines is what a squeezed flex row does to a label without this. */
+.site-nav-link,
+.site-nav-cta {
+  white-space: nowrap;
+}
+
+.site-nav-link {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: none;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.site-nav-cta {
+  height: 44px;
+  padding: 0 16px;
+  font-size: 15px;
+}
+
+@media (min-width: 900px) {
+  .site-nav-cta {
+    height: 46px;
+    padding: 0 20px;
+  }
+}
+
+/* Below the breakpoint the header carries the mark and the single action. */
+@media (max-width: 719px) {
+  .site-nav-secondary {
+    display: none;
+  }
+}
+
+/* ── Fluid type ─────────────────────────────────────────────────────── */
+
+/* Sized against the viewport rather than stepped at breakpoints, so a 320px
+   phone and a 430px one both get a heading that fits. */
+.hero h1 {
+  font-size: clamp(2rem, 8.5vw, 4.125rem);
+}
+
+.landing h2 {
+  font-size: clamp(1.625rem, 5vw, 2.5rem);
+}
+
+.dark-panel h2 {
+  font-size: clamp(1.625rem, 5vw, 2.625rem);
+}
+
+/* ── No horizontal scroll, ever ─────────────────────────────────────── */
+
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* A long unbroken string — a source URL, a pasted token — must not push the
+   page wider than the screen. */
+.landing,
+.screen {
+  overflow-wrap: break-word;
+}
+
+/* ── Landing sections ───────────────────────────────────────────────── */
+
+/* The whole page was spaced for a desktop column. On a phone that rhythm
+   becomes long empty gaps the reader has to scroll past. */
+.landing-inner {
+  padding: 0 16px;
+}
+
+@media (min-width: 720px) {
+  .landing-inner {
+    padding: 0 32px;
+  }
+}
+
+@media (min-width: 900px) {
+  .landing-inner {
+    padding: 0 96px;
+  }
+}
+
+.hero {
+  padding: 32px 0 40px;
+  gap: 32px;
+}
+
+@media (min-width: 900px) {
+  .hero {
+    padding: 72px 0 88px;
+  }
+}
+
+.landing-section {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  padding: 48px 0;
+}
+
+@media (min-width: 900px) {
+  .landing-section {
+    gap: 40px;
+    padding: 88px 0;
+  }
+}
+
+.trust-band {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  background: var(--green-mist);
+  border-radius: 18px;
+  flex-wrap: wrap;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--green-dark);
+}
+
+@media (min-width: 900px) {
+  .trust-band {
+    gap: 20px;
+    padding: 26px 34px;
+  }
+}
+
+.trust-band-note {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+/* `margin-left: auto` pushes this to the far edge on a wide row; wrapped onto
+   its own line on a phone, that auto margin would shove it right instead. */
+@media (min-width: 900px) {
+  .trust-band-note {
+    margin-left: auto;
+  }
+}
+
+.landing-cta {
+  padding: 40px 0;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+@media (min-width: 900px) {
+  .landing-cta {
+    padding: 72px 0;
+    gap: 24px;
+  }
+}
+
+/* A full-width action reads as the primary one on a phone; beside text on a
+   desktop it should keep its natural size. */
+.landing-cta .btn {
+  width: 100%;
+}
+
+@media (min-width: 560px) {
+  .landing-cta .btn {
+    width: auto;
+  }
+}
+
+.dark-panel {
+  padding: 32px 20px;
+}
+
+@media (min-width: 720px) {
+  .dark-panel {
+    padding: 44px 32px;
+  }
+}
+
+@media (min-width: 900px) {
+  .dark-panel {
+    padding: 64px 72px;
+  }
+}
+
+/* The hero's two actions stack full-width rather than shrinking side by side. */
+.hero-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.hero-actions .btn {
+  flex: 1 1 100%;
+}
+
+@media (min-width: 560px) {
+  .hero-actions .btn {
+    flex: 0 0 auto;
+  }
+}

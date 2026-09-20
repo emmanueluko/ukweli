@@ -171,13 +171,20 @@ public class AuthEnabledTests : IDisposable
     [Theory]
     [InlineData("")]
     [InlineData("a-token-that-was-never-issued")]
-    public async Task RefusesAnUnknownSignInLink(string token)
+    public async Task SendsAnUnusableLinkBackToTheSignInScreen(string token)
     {
-        using var client = _factory.CreateClient();
+        // The person following this came from an email client. They get a
+        // screen that explains, not a JSON error envelope.
+        using var client = _factory.CreateClient(
+            new Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactoryClientOptions
+            {
+                AllowAutoRedirect = false,
+            });
 
         var response = await client.GetAsync($"/api/auth/verify?token={token}");
 
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Found, response.StatusCode);
+        Assert.Contains("/sign-in?error=link_expired", response.Headers.Location!.ToString(), StringComparison.Ordinal);
     }
 
     [Fact]

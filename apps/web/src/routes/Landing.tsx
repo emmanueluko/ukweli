@@ -47,16 +47,18 @@ export function Landing() {
         Skip to content
       </a>
 
-      <header className="landing-inner topbar" style={{ padding: '22px 24px' }}>
+      <header className="site-header">
         <Brand to="/" />
-        <nav style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-          <a href="#how" style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)', textDecoration: 'none' }}>
+        <nav className="site-nav">
+          {/* Both secondary links are reachable from the footer and the check
+              screen, so on a phone they give way to the one action that matters. */}
+          <a href="#how" className="site-nav-link site-nav-secondary">
             How it works
           </a>
-          <Link to="/sign-in" style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)', textDecoration: 'none' }}>
+          <Link to="/sign-in" className="site-nav-link site-nav-secondary">
             Sign in
           </Link>
-          <Link to="/check" className="btn btn-primary" style={{ height: 46, padding: '0 20px', fontSize: 15 }}>
+          <Link to="/check" className="btn btn-primary site-nav-cta">
             Check a claim
           </Link>
         </nav>
@@ -71,7 +73,7 @@ export function Landing() {
               against verified official sources and answers with evidence, or tells you honestly
               when it can’t.
             </p>
-            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <div className="hero-actions">
               <Link to="/check" className="btn btn-primary" style={{ height: 56, padding: '0 26px' }}>
                 Check a claim now
               </Link>
@@ -120,29 +122,17 @@ export function Landing() {
           </form>
         </section>
 
-        <section
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 20,
-            padding: '26px 34px',
-            background: 'var(--green-mist)',
-            borderRadius: 18,
-            flexWrap: 'wrap',
-          }}
-        >
+        <section className="trust-band">
           <strong style={{ fontSize: 15, fontWeight: 600, color: 'var(--green-dark)' }}>
             Answers come only from official sources
           </strong>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <span className="pill">Nigeria Centre for Disease Control</span>
           </div>
-          <span style={{ fontSize: 14, color: 'var(--muted)', marginLeft: 'auto' }}>
-            Every verdict cites its evidence
-          </span>
+          <span className="trust-band-note">Every verdict cites its evidence</span>
         </section>
 
-        <section id="how" className="stack" style={{ gap: 40, padding: '96px 0 88px' }}>
+        <section id="how" className="stack landing-section">
           <h2 style={{ fontSize: 40 }}>How a check works</h2>
           <div className="grid-3" style={{ gap: 48 }}>
             {[
@@ -174,7 +164,7 @@ export function Landing() {
         </section>
 
         {examples.length > 0 && (
-          <section className="stack" style={{ gap: 36, paddingBottom: 96 }}>
+          <section className="stack landing-section">
             <div className="stack" style={{ gap: 12, maxWidth: 760 }}>
               <h2 style={{ fontSize: 40, lineHeight: 1.15 }}>Every answer shows its evidence</h2>
               <p style={{ margin: 0, fontSize: 16, lineHeight: 1.6, color: 'var(--muted)' }}>
@@ -221,7 +211,7 @@ export function Landing() {
           </div>
         </section>
 
-        <section className="spread" style={{ padding: '72px 0', gap: 24, flexWrap: 'wrap' }}>
+        <section className="spread landing-cta">
           <div className="stack" style={{ gap: 8 }}>
             <h2 style={{ fontSize: 32 }}>Something forwarded to you today?</h2>
             <span style={{ fontSize: 15, color: 'var(--muted)' }}>
