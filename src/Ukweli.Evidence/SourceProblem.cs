@@ -26,4 +26,22 @@ public static class SourceProblemCodes
     public const string CorpusTooLarge = "corpus_too_large";
     public const string CorpusEmpty = "corpus_empty";
     public const string UnreachableUrl = "unreachable_url";
+
+    // Raised only by an automated ingest.
+
+    /// <summary>The URL is not on a publisher in the registry.</summary>
+    public const string NotOnAllowlist = "not_on_allowlist";
+
+    /// <summary>The issuer or standing does not match what the registry says.</summary>
+    public const string IssuerMismatch = "issuer_mismatch";
+
+    /// <summary>This publisher does not publish on that topic.</summary>
+    public const string TopicNotPublished = "topic_not_published";
+
+    /// <summary>The strongest gate: the excerpt is not in the fetched document.</summary>
+    public const string ExcerptNotInDocument = "excerpt_not_in_document";
+
+    public const string ExcerptTooLong = "excerpt_too_long";
+    public const string ImplausibleDate = "implausible_date";
+    public const string WrongCuration = "wrong_curation";
 }

@@ -54,6 +54,15 @@ public sealed record SourceRecord
     public bool Active { get; init; } = true;
 
     /// <summary>
+    /// Who put this record here. Defaults to human, so anything written by
+    /// hand is labelled correctly without having to say so.
+    /// </summary>
+    public Curation Curation { get; init; } = Curation.Human;
+
+    /// <summary>When an automated ingest last confirmed the excerpt is still there.</summary>
+    public DateOnly? RevalidatedAt { get; init; }
+
+    /// <summary>
     /// Whether this record can carry a claim on its own. Safety rules 3 and 5:
     /// only a primary official source can support or contradict, and a
     /// secondary source never overrides a primary.

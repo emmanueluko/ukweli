@@ -1,0 +1,65 @@
+name: Ingest
+
+# Keeps the curated store current without anyone having to remember to look.
+on:
+  schedule:
+    # Twice daily, offset from the hour because every cron job in the world
+    # runs at :00 and shared runners queue accordingly.
+    - cron: '17 6,18 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Report what would change without writing it'
+        type: boolean
+        default: false
+
+concurrency:
+  group: ingest-production
+  cancel-in-progress: false
+
+jobs:
+  ingest:
+    name: Fetch and revalidate sources
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Open an SSH connection
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          echo "${{ secrets.DEPLOY_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Revalidate what is already stored
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+          DRY: ${{ inputs.dry_run && '--dry-run' || '' }}
+        run: |
+          # Run first: a store that quietly rots is worse than one that grows
+          # slowly, so dead excerpts are retired before new ones are added.
+          ssh -i ~/.ssh/deploy_key "$USER@$HOST" \
+            "cd /opt/ukweli && docker compose exec -T api dotnet /app/cli/Ukweli.Cli.dll revalidate $DRY"
+
+      - name: Fetch anything newly published
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+          DRY: ${{ inputs.dry_run && '--dry-run' || '' }}
+        run: |
+          ssh -i ~/.ssh/deploy_key "$USER@$HOST" \
+            "cd /opt/ukweli && docker compose exec -T api dotnet /app/cli/Ukweli.Cli.dll ingest $DRY"
+
+      - name: Confirm the store is still servable
+        env:
+          APP_URL: ${{ secrets.DEPLOY_APP_URL }}
+        run: |
+          body=$(curl -fsS --max-time 20 "$APP_URL/healthz")
+          echo "$body"
+          echo "$body" | grep -q '"db":true' || {
+            echo "The site is not healthy after ingestion." >&2
+            exit 1
+          }

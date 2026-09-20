@@ -50,7 +50,7 @@ public static class Retriever
     };
 
     /// <summary>Terms that mark a claim as belonging to a topic.</summary>
-    private static readonly Dictionary<Topic, string[]> TopicTerms = new()
+    private static readonly Dictionary<Topic, string[]> TopicVocabulary = new()
     {
         [Topic.PaymentsLevies] =
         [
@@ -59,6 +59,7 @@ public static class Retriever
             "revenue", "permit", "licence", "license", "registration", "fine", "penalty",
             "collector", "sealed", "seal", "shop", "shops", "trader", "traders", "market",
             "household", "households", "waste", "refuse", "tenement", "land", "property",
+            "remittance", "circular", "assessment", "deduction", "withholding", "stamp",
         ],
         [Topic.DiseaseOutbreaks] =
         [
@@ -67,8 +68,41 @@ public static class Retriever
             "covid", "symptom", "symptoms", "case", "cases", "death", "deaths", "vaccine",
             "vaccination", "cure", "cured", "treatment", "hospital", "clinic", "health",
             "quarantine", "isolation", "contagious", "spread", "herbal", "remedy",
+            "surveillance", "sitrep", "confirmed", "suspected", "fatality",
+        ],
+        [Topic.HealthProducts] =
+        [
+            "drug", "drugs", "medicine", "medicines", "recall", "recalled", "counterfeit",
+            "fake", "substandard", "falsified", "batch", "nafdac", "registration", "banned",
+            "withdrawn", "alert", "product", "syrup", "tablet", "capsule", "injection",
+            "contaminated", "adulterated", "supplement", "herbal", "unregistered", "expired",
+        ],
+        [Topic.IdentityDocuments] =
+        [
+            "identity", "identification", "nin", "passport", "licence", "license", "card",
+            "enrolment", "enrollment", "registration", "deadline", "biometric", "capture",
+            "renewal", "renew", "issuance", "document", "documents", "verification",
+            "slip", "booklet", "application", "applicant", "expiry", "validity",
+        ],
+        [Topic.Emergencies] =
+        [
+            "flood", "flooding", "disaster", "emergency", "evacuation", "evacuate", "warning",
+            "alert", "rainfall", "storm", "collapse", "displaced", "relief", "shelter",
+            "rescue", "casualty", "casualties", "hazard", "landslide", "fire", "erosion",
+            "advisory", "prepare", "preparedness",
+        ],
+        [Topic.Elections] =
+        [
+            "election", "elections", "voter", "voters", "register", "registration", "poll",
+            "polling", "ballot", "candidate", "party", "constituency", "ward", "collation",
+            "result", "results", "pvc", "inec", "campaign", "nomination", "electoral",
+            "deadline", "accreditation",
         ],
     };
+
+    /// <summary>The vocabulary a topic is recognised by. Used by ingestion too.</summary>
+    public static IReadOnlyList<string> TopicTerms(Topic topic) =>
+        TopicVocabulary.TryGetValue(topic, out var terms) ? terms : [];
 
     /// <summary>A source and why it was selected.</summary>
     public sealed record Match(SourceRecord Source, double Score);
@@ -112,7 +146,7 @@ public static class Retriever
     {
         ArgumentNullException.ThrowIfNull(claimTerms);
 
-        return [.. TopicTerms
+        return [.. TopicVocabulary
             .Where(entry => entry.Value.Any(term => claimTerms.Contains(term)))
             .Select(entry => entry.Key)];
     }

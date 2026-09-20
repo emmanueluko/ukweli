@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Ukweli.Data;
@@ -11,9 +12,11 @@ using Ukweli.Data;
 namespace Ukweli.Data.Migrations
 {
     [DbContext(typeof(UkweliDbContext))]
-    partial class UkweliDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260920221757_AddCurationProvenance")]
+    partial class AddCurationProvenance
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

@@ -50,4 +50,14 @@ public class Source
 
     /// <summary>False retires the record from retrieval without deleting it.</summary>
     public bool Active { get; set; } = true;
+
+    /// <summary>Who put this record here — a person, or an automated ingest.</summary>
+    public Curation Curation { get; set; } = Curation.Human;
+
+    /// <summary>
+    /// When an automated ingest last confirmed the excerpt still appears in the
+    /// document. An automated record that stops revalidating is deactivated:
+    /// what went in by machine comes out by machine.
+    /// </summary>
+    public DateOnly? RevalidatedAt { get; set; }
 }

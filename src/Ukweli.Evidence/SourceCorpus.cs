@@ -14,8 +14,17 @@ namespace Ukweli.Evidence;
 /// </remarks>
 public static class SourceCorpus
 {
-    /// <summary>The corpus is deliberately small; retrieval is keyword scoring, not search.</summary>
-    public const int MaxRecords = 15;
+    /// <summary>
+    /// An upper bound, not a design target.
+    /// </summary>
+    /// <remarks>
+    /// The original cap of fifteen assumed a hand-curated store and keyword
+    /// scoring over every record. With automated ingestion across six topics
+    /// that is no longer the shape of the thing, so retrieval filters by
+    /// jurisdiction and topic first and ranks with Postgres full-text search.
+    /// The cap remains so the corpus cannot grow without anyone noticing.
+    /// </remarks>
+    public const int MaxRecords = 500;
 
     public const string FileName = "sources.json";
 

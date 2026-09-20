@@ -26,6 +26,8 @@ public static class CommandRunner
         {
             "seed" => await SeedCommand.RunAsync(rest, cancellationToken),
             "verify-sources" => await VerifySourcesCommand.RunAsync(rest, cancellationToken),
+            "ingest" => await IngestCommand.RunAsync(rest, cancellationToken),
+            "revalidate" => await RevalidateCommand.RunAsync(rest, cancellationToken),
             "--help" or "-h" or "help" or null => PrintUsage(Success),
             _ => PrintUnknown(command),
         };
@@ -48,10 +50,17 @@ public static class CommandRunner
         writer.WriteLine("  verify-sources   Validate the curated store. Fails while any record is a");
         writer.WriteLine("                   placeholder, an id is duplicated, or a url is unreachable.");
         writer.WriteLine("  seed             Load the curated store into the database (idempotent).");
+        writer.WriteLine("  ingest           Fetch new documents from the registry's publishers.");
+        writer.WriteLine("                   Every excerpt is verified verbatim against the page");
+        writer.WriteLine("                   it cites; nothing is summarised.");
+        writer.WriteLine("  revalidate       Re-check stored sources. Automated records whose");
+        writer.WriteLine("                   excerpt has gone are deactivated; human-curated ones");
+        writer.WriteLine("                   are reported for a person to resolve.");
         writer.WriteLine();
         writer.WriteLine("Options:");
         writer.WriteLine("  --sources <path> Path to sources.json. Defaults to the copy beside this build.");
         writer.WriteLine("  --skip-http      verify-sources only: skip reachability checks (offline runs).");
+        writer.WriteLine("  --dry-run        ingest and revalidate: report without writing.");
         writer.WriteLine();
         writer.WriteLine("Environment:");
         writer.WriteLine("  DATABASE_URL     Required by seed. postgres:// URL or an Npgsql string.");

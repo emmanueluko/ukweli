@@ -52,6 +52,11 @@ public class UkweliDbContext(DbContextOptions<UkweliDbContext> options) : DbCont
             source.Property(s => s.Placeholder).HasDefaultValue(false);
             source.Property(s => s.Active).HasDefaultValue(true);
 
+            source.Property(s => s.Curation)
+                .HasConversion(EnumConversions.For<Curation>())
+                .HasMaxLength(16)
+                .HasDefaultValue(Curation.Human);
+
             // Retrieval filters on exactly these three columns.
             source.HasIndex(s => new { s.Active, s.Jurisdiction, s.Topic });
         });
