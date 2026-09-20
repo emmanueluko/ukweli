@@ -25,6 +25,17 @@ jobs:
           --health-timeout 5s
           --health-retries 10
 
+      # The magic-link round trip is only worth running against a real inbox,
+      # so CI gets the same Mailpit the dev stack uses.
+      mailpit:
+        image: axllent/mailpit:latest
+        ports:
+          - 1025:1025
+          - 8025:8025
+        env:
+          MP_SMTP_AUTH_ACCEPT_ANY: 1
+          MP_SMTP_AUTH_ALLOW_INSECURE: 1
+
     env:
       # The integration tests read this; the dev default points at localhost too,
       # but naming it here makes the dependency explicit.
@@ -32,6 +43,8 @@ jobs:
       DATABASE_URL: postgres://ukweli:ukweli@localhost:5432/ukweli_test
       APP_URL: http://localhost:5173
       AUTH_ENABLED: 'false'
+      SMTP_HOST: localhost
+      SMTP_PORT: '1025'
       DOTNET_NOLOGO: 'true'
       DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
 

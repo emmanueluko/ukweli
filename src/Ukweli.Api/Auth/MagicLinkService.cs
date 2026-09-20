@@ -50,7 +50,20 @@ public sealed class MagicLinkService(
         await db.SaveChangesAsync(cancellationToken);
 
         var link = $"{options.AppUrl.TrimEnd('/')}/api/auth/verify?token={Uri.EscapeDataString(token)}";
-        await mailer.SendMagicLinkAsync(normalised, link, cancellationToken);
+
+        try
+        {
+            await mailer.SendMagicLinkAsync(normalised, link, cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            // A delivery failure must not change what the caller sees. The
+            // endpoint answers 202 whether or not the address is known, and if
+            // an unreachable mail server turned that into a 500 the difference
+            // would be visible from outside — which is the signal the fixed 202
+            // exists to remove. It is logged instead, without the address.
+            logger.MagicLinkFailed(0);
+        }
     }
 
     /// <summary>

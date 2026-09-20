@@ -21,11 +21,16 @@ public sealed class UkweliApiFactory : WebApplicationFactory<Program>
     private readonly string _databaseUrl;
     private readonly string _anthropicApiKey;
     private readonly bool _authEnabled;
+    private readonly int? _smtpPort;
 
     public UkweliApiFactory(
-        string? databaseUrl = null, string? anthropicApiKey = null, bool authEnabled = false)
+        string? databaseUrl = null,
+        string? anthropicApiKey = null,
+        bool authEnabled = false,
+        int? smtpPort = null)
     {
         _authEnabled = authEnabled;
+        _smtpPort = smtpPort;
         // TEST_DATABASE_URL lets CI point at its own service container.
         _databaseUrl = databaseUrl
             ?? Environment.GetEnvironmentVariable("TEST_DATABASE_URL")
@@ -41,5 +46,10 @@ public sealed class UkweliApiFactory : WebApplicationFactory<Program>
         builder.UseSetting("AUTH_ENABLED", _authEnabled ? "true" : "false");
         // PORT is left blank: WebApplicationFactory supplies its own server.
         builder.UseSetting("PORT", string.Empty);
+
+        if (_smtpPort is { } port)
+        {
+            builder.UseSetting("SMTP_PORT", port.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        }
     }
 }

@@ -135,6 +135,23 @@ public class AuthEnabledTests : IDisposable
             await second.Content.ReadAsStringAsync());
     }
 
+    [Fact]
+    public async Task StillAccepts202WhenTheMailServerIsUnreachable()
+    {
+        // Regression: CI has no Mailpit, and an escaping socket error turned the
+        // fixed 202 into a 500. That difference is visible from outside, which
+        // is exactly the signal the fixed 202 exists to remove — a dead mail
+        // server is an operational problem, not something a stranger should be
+        // able to probe for. Port 1 has nothing listening.
+        using var offline = new UkweliApiFactory(authEnabled: true, smtpPort: 1);
+        using var client = offline.CreateClient();
+
+        var response = await client.PostAsJsonAsync(
+            "/api/auth/magic-link", new MagicLinkRequest("someone@example.com"));
+
+        Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
+    }
+
     [Theory]
     [InlineData(null)]
     [InlineData("")]
