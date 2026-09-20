@@ -101,6 +101,11 @@ public class UkweliDbContext(DbContextOptions<UkweliDbContext> options) : DbCont
                 .HasColumnType("jsonb")
                 .Metadata.SetValueComparer(JsonConversions.DictionaryComparer<SourceRelation>());
 
+            analysis.Property(a => a.Translations)
+                .HasConversion(JsonConversions.ForTranslations())
+                .HasColumnType("jsonb")
+                .Metadata.SetValueComparer(JsonConversions.TranslationComparer());
+
             analysis.Property(a => a.IsSeeded).HasDefaultValue(false);
 
             // "My past checks", newest first (Phase 4).

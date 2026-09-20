@@ -45,6 +45,19 @@ public sealed record SeedRecord
 
     /// <summary>True while the analysis text is still awaiting a curator.</summary>
     public bool Placeholder { get; init; }
+
+    /// <summary>
+    /// Hand-written renderings of this analysis, keyed by language code.
+    /// </summary>
+    /// <remarks>
+    /// The seeds are what the demo rests on, so their translations are written
+    /// by a person rather than produced on demand: a seeded claim never reaches
+    /// the model in any language. They are still put through
+    /// <see cref="TranslationGuard"/>, because a hand-written translation can
+    /// drop an unknown or mistype a figure just as a generated one can.
+    /// </remarks>
+    public IReadOnlyDictionary<string, Translation> Translations { get; init; } =
+        new Dictionary<string, Translation>();
 }
 
 /// <summary>A source cited by a seeded analysis, and how it stands to the claim.</summary>

@@ -56,6 +56,23 @@ public interface IAiProvider
         ExtractedClaim claim,
         IReadOnlyList<SourceRecord> retrieved,
         CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Renders an already-approved result in another language.
+    /// </summary>
+    /// <remarks>
+    /// This runs after every safety rule has been applied, and it is not
+    /// allowed to revisit any of them: the verdict, the sources, the dates and
+    /// the relations are identical in every language, and only the prose
+    /// changes. Whatever comes back is checked by
+    /// <see cref="TranslationGuard"/> before anybody reads it.
+    /// </remarks>
+    /// <param name="approved">The English result, as published.</param>
+    /// <param name="language">The language to render it in.</param>
+    Task<Translation> TranslateAsync(
+        Translation approved,
+        Language language,
+        CancellationToken cancellationToken);
 }
 
 /// <summary>Raised when the model fails, times out, or returns something unusable.</summary>

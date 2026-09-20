@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { api, ApiError, type Analysis } from '../api';
+import { api, ApiError, type Analysis, storedLanguage } from '../api';
 import { Brand } from '../components/Brand';
 import { Loading } from '../components/Feedback';
 import { ScreenHeader } from '../components/ScreenHeader';
@@ -14,7 +14,7 @@ export function MyChecks() {
 
   const load = useCallback(async () => {
     try {
-      const [me, rows] = await Promise.all([api.me(), api.myAnalyses()]);
+      const [me, rows] = await Promise.all([api.me(), api.myAnalyses(storedLanguage())]);
       setEmail(me.email);
       setAnalyses(rows);
       setState('ready');

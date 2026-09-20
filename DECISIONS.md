@@ -352,3 +352,67 @@ reach it.
 
 **nginx falls back to `index.html`** for unknown paths, because `/r/{id}` share
 links are routes rather than files and must reach the app rather than a 404.
+
+## Languages
+
+Ukweli answers in English, Nigerian Pidgin (`pcm`) and French (`fr`). The choice
+is about who receives forwarded civic rumours in West Africa: English is
+Nigeria's official language, Pidgin is what tens of millions of people actually
+speak day to day, and French covers most of the countries next door.
+
+**One finding, several renderings.** Translation happens after the verdict,
+never as part of it. The status, the cited sources, the publication and checked
+dates, and each source's relation to the claim are identical in every language.
+Switching language changes how the answer reads and never what it says.
+
+**Excerpts are never translated.** Ukweli's promise is that it quotes the
+document, and a translated quotation is no longer a quotation. The explanation
+is rendered around the excerpt; the excerpt itself stays in the language the
+authority published it in.
+
+**The normalised claim is not translated either.** It is what the user asked,
+recorded as the system read it — not something Ukweli said.
+
+**Produced once, then stored.** The first request for a language renders it and
+writes it to the `translations` jsonb column on `claim_analyses`; every request
+after that reads it back. That makes switching instant after the first time,
+keeps a shared `/r/{id}` link reading the same for everyone who opens it, and
+means nobody waits twice for the same words. Writes are write-once: a language
+already present is left alone, so two readers asking at the same moment cannot
+change the text under each other.
+
+**Seeded claims never reach the model, in any language.** Their Pidgin and
+French renderings are hand-written in `seeds.json` alongside the English, so the
+demo works with no API key at all in all three languages.
+
+**The safety rules run again, per language.** `TranslationGuard` checks only
+what is genuinely verifiable across languages rather than guessing at tone:
+
+| check | why |
+| --- | --- |
+| every figure in the English survives unchanged | a number that changes in translation is a different finding; digits do not translate, so this is exact |
+| the unknowns count is preserved | what a check could not establish is part of its answer; a translation that drops one reads more certain than the finding is |
+| no confidence vocabulary appears | safety rule 6 has no language |
+| the next step contains no instruction to pay or to disregard medical advice | safety rule 7, with a per-language phrase list |
+
+A translation that fails is discarded and English is returned with a note saying
+so. Being told a translation is unavailable is better than being quietly handed
+a worse answer, and showing English under another language's label would be a
+quiet lie. A failed translation is never a 503: the finding stands, only this
+rendering of it is missing.
+
+**Share text is hand-written, not translated.** The forwarded summary is the
+part of a result most likely to travel further than the page it came from, so
+its wording in all three languages is fixed in `ShareText` — the thing most
+likely to be spread is never something a model produced. The same goes for the
+interface's own labels, in `apps/web/src/copy.ts`.
+
+**History is not translated on demand.** `GET /api/me/analyses` renders from
+stored translations only. Rendering a whole history would otherwise cost one
+model call per row on every page load, and a list of past checks is not worth
+that wait.
+
+**French dates are spelled out in code.** The API runs in
+globalization-invariant mode, where `CultureInfo.GetCultureInfo("fr-FR")`
+throws. The month names live in `ShareText` rather than coming from a culture.
+

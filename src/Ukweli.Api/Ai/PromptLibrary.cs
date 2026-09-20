@@ -12,12 +12,14 @@ public sealed class PromptLibrary
 {
     public const string ExtractVersion = "extract-v1";
     public const string VerdictVersion = "verdict-v1";
+    public const string TranslateVersion = "translate-v1";
 
     public PromptLibrary(string? promptsDirectory = null)
     {
         Directory = promptsDirectory ?? Locate();
         Extract = Read("extract.v1.txt");
         Verdict = Read("verdict.v1.txt");
+        Translate = Read("translate.v1.txt");
     }
 
     public string Directory { get; }
@@ -25,6 +27,8 @@ public sealed class PromptLibrary
     public string Extract { get; }
 
     public string Verdict { get; }
+
+    public string Translate { get; }
 
     private string Read(string fileName)
     {

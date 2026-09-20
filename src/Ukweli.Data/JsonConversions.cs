@@ -74,6 +74,20 @@ internal static class JsonConversions
         return true;
     }
 
+    /// <summary>Stores the per-language prose as jsonb.</summary>
+    public static ValueConverter<Dictionary<string, Translation>, string> ForTranslations() =>
+        new(value => JsonSerializer.Serialize(value, Options),
+            json => JsonSerializer.Deserialize<Dictionary<string, Translation>>(json, Options)
+                ?? new Dictionary<string, Translation>());
+
+    public static ValueComparer<Dictionary<string, Translation>> TranslationComparer() =>
+        // Compared by serialised value: a translation is written once and read
+        // thereafter, so correctness matters more than comparison speed.
+        new((left, right) => JsonSerializer.Serialize(left, Options) == JsonSerializer.Serialize(right, Options),
+            value => JsonSerializer.Serialize(value, Options).GetHashCode(StringComparison.Ordinal),
+            value => JsonSerializer.Deserialize<Dictionary<string, Translation>>(
+                JsonSerializer.Serialize(value, Options), Options) ?? new Dictionary<string, Translation>());
+
     private static string Serialise<TValue>(Dictionary<string, TValue> value)
         where TValue : struct, Enum =>
         JsonSerializer.Serialize(

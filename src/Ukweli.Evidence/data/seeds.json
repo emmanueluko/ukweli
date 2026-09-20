@@ -15,10 +15,36 @@
     "action": "Check the NCDC situation reports page for the most recent week before repeating the figures.",
     "actionIsGeneric": false,
     "sources": [
-      { "id": "ncdc-lassa-sitrep-w34-2026-burden", "relation": "supports" },
-      { "id": "ncdc-lassa-sitrep-w33-2026", "relation": "context" }
+      {
+        "id": "ncdc-lassa-sitrep-w34-2026-burden",
+        "relation": "supports"
+      },
+      {
+        "id": "ncdc-lassa-sitrep-w33-2026",
+        "relation": "context"
+      }
     ],
-    "placeholder": false
+    "placeholder": false,
+    "translations": {
+      "pcm": {
+        "explanation": "NCDC — na dem be di government body wey dey track disease for Nigeria — put am for dia Lassa fever report for week 34 of 2026 say 253 people don die, and say na 24.0% of confirmed cases dey die. Dem talk say 24 states don get at least one confirmed case, across 118 local government areas. So wetin di message talk gree with wetin di report talk. But note say dis figures na cumulative till 23 August 2026, so e fit don change since den.",
+        "simpleExplanation": "Di claim correct. NCDC report say 253 people don die from Lassa fever for 24 states for 2026, as at late August.",
+        "unknowns": [
+          "How many deaths don happen since 23 August 2026, wey be di last week wey dis report cover.",
+          "Whether di message dey talk about dis year or one outbreak wey happen before."
+        ],
+        "action": "Check NCDC situation reports page make you see di latest week before you share di numbers."
+      },
+      "fr": {
+        "explanation": "Le NCDC, l'agence nigériane de contrôle des maladies, indique dans son rapport de situation sur la fièvre de Lassa pour la semaine 34 de 2026 que 253 décès ont été enregistrés, soit un taux de létalité de 24,0 %, et que 24 États ont recensé au moins un cas confirmé dans 118 zones de gouvernement local. Les deux éléments de l'affirmation correspondent à ce rapport. Ces chiffres sont cumulés jusqu'au 23 août 2026 et ont donc pu évoluer depuis.",
+        "simpleExplanation": "L'affirmation correspond au rapport. Le NCDC a recensé 253 décès dus à la fièvre de Lassa dans 24 États en 2026, à fin août.",
+        "unknowns": [
+          "Le nombre de décès survenus depuis le 23 août 2026, dernière semaine couverte par ce rapport.",
+          "Si le message parlait de cette année ou d'une épidémie antérieure."
+        ],
+        "action": "Consultez la page des rapports de situation du NCDC pour la semaine la plus récente avant de reprendre ces chiffres."
+      }
+    }
   },
   {
     "id": "seed-lassa-herbal-cure",
@@ -36,10 +62,36 @@
     "action": "Do not share the voice note, and contact the NCDC on its toll-free line 6232 to confirm anything about Lassa fever treatment.",
     "actionIsGeneric": false,
     "sources": [
-      { "id": "ncdc-lassa-sitrep-w34-2026-guidance", "relation": "conflicts" },
-      { "id": "ncdc-lassa-sitrep-w34-2026-burden", "relation": "context" }
+      {
+        "id": "ncdc-lassa-sitrep-w34-2026-guidance",
+        "relation": "conflicts"
+      },
+      {
+        "id": "ncdc-lassa-sitrep-w34-2026-burden",
+        "relation": "context"
+      }
     ],
-    "placeholder": false
+    "placeholder": false,
+    "translations": {
+      "pcm": {
+        "explanation": "Na di opposite of wetin NCDC dem talk. For dia Lassa fever report for week 34 of 2026, NCDC tell health workers say make dem no rest for suspicion, make dem refer patient quick and treat dem quick. Na di opposite of say person no need hospital. Di same report show say 24.0% of confirmed cases die dis year, and dem talk say one reason why di number high na because people dey come hospital late. Nothing for di report talk about any herbal cure.",
+        "simpleExplanation": "NCDC dey tell health workers make dem treat Lassa fever patient quick. Dem no talk about any herbal cure, and person wey delay dey more likely to die.",
+        "unknowns": [
+          "Who dem say talk di thing for di voice note.",
+          "Whether di message dey talk about one particular product wey dem dey sell."
+        ],
+        "action": "No share di voice note, and call NCDC for dia toll-free line 6232 make dem confirm anything about Lassa fever treatment."
+      },
+      "fr": {
+        "explanation": "C'est l'inverse de ce que dit le NCDC. Dans son rapport de situation sur la fièvre de Lassa pour la semaine 34 de 2026, l'agence demande aux soignants de maintenir un indice de suspicion élevé et d'orienter puis traiter les cas rapidement — exactement le contraire de l'idée que l'hôpital serait inutile. Le même rapport fait état d'un taux de létalité de 24,0 % pour 2026 et cite la présentation tardive des cas parmi les raisons de ce niveau élevé. Rien dans le rapport ne mentionne un remède à base de plantes.",
+        "simpleExplanation": "Le NCDC demande aux soignants de traiter rapidement les cas de fièvre de Lassa. Il ne mentionne aucun remède à base de plantes, et le retard de prise en charge augmente la mortalité.",
+        "unknowns": [
+          "À qui le message vocal attribue cette déclaration.",
+          "Si le message faisait référence à un produit précis mis en vente."
+        ],
+        "action": "Ne partagez pas ce message vocal et contactez le NCDC au numéro gratuit 6232 pour vérifier toute information sur le traitement de la fièvre de Lassa."
+      }
+    }
   },
   {
     "id": "seed-unlisted-local-fee",
@@ -58,6 +110,28 @@
     "action": "",
     "actionIsGeneric": true,
     "sources": [],
-    "placeholder": false
+    "placeholder": false,
+    "translations": {
+      "pcm": {
+        "explanation": "Di sources wey Ukweli get no get anything about any new waste collection fee wey person dey collect from house to house, and di message no talk which state or local government area e dey talk about. Dis no mean say di claim na lie — e mean say Ukweli no fit check am. Say we no get record no talk anything about wetin any authority don announce.",
+        "simpleExplanation": "Ukweli no get any source wey cover dis one, so e no fit talk whether e true or e no true.",
+        "unknowns": [
+          "Which state or local government area di claim dey talk about.",
+          "Which body dem say approve di fee.",
+          "Whether any official notice about dis fee even dey at all."
+        ],
+        "action": "Ask di authority wey di message mention make dem show you di official notice before you pay anything."
+      },
+      "fr": {
+        "explanation": "Les sources dont dispose Ukweli ne mentionnent aucune nouvelle redevance de collecte des déchets perçue en porte-à-porte, et le message ne précise ni l'État ni la zone de gouvernement local concernée. Cela ne signifie pas que l'affirmation est fausse : cela signifie qu'Ukweli ne peut pas la vérifier. L'absence de document ici ne dit rien, dans un sens ou dans l'autre, de ce qu'une autorité aurait annoncé.",
+        "simpleExplanation": "Ukweli ne dispose d'aucune source sur ce sujet et ne peut donc pas dire si c'est vrai ou faux.",
+        "unknowns": [
+          "L'État ou la zone de gouvernement local concernée.",
+          "L'autorité qui aurait approuvé cette redevance.",
+          "S'il existe seulement un avis officiel à ce sujet."
+        ],
+        "action": "Demandez à l'autorité citée dans le message de vous montrer l'avis officiel avant de payer quoi que ce soit."
+      }
+    }
   }
 ]

@@ -29,6 +29,19 @@ namespace Ukweli.Contracts;
 /// A short summary safe to forward. Built server-side and deliberately free of
 /// the user's own words.
 /// </param>
+/// <param name="Language">
+/// The language this rendering is in. It is not always the language that was
+/// asked for: when a translation cannot be produced the English is returned and
+/// <paramref name="TranslationNote"/> says so, because showing English under
+/// another language's label would be a quiet lie.
+/// </param>
+/// <param name="AvailableLanguages">
+/// Every language this result can be read in, so a client can offer them
+/// without guessing.
+/// </param>
+/// <param name="TranslationNote">
+/// Null in the normal case. Set when the requested language was unavailable.
+/// </param>
 public sealed record AnalysisResponse(
     string Id,
     string NormalizedClaim,
@@ -41,7 +54,10 @@ public sealed record AnalysisResponse(
     bool ActionIsGeneric,
     IReadOnlyList<AnalysisSourceResponse> Sources,
     DateOnly? CheckedOn,
-    string ShareText);
+    string ShareText,
+    Language Language,
+    IReadOnlyList<Language> AvailableLanguages,
+    string? TranslationNote);
 
 /// <summary>A cited source, with how it stands in relation to the claim.</summary>
 public sealed record AnalysisSourceResponse(

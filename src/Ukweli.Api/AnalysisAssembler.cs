@@ -8,12 +8,30 @@ namespace Ukweli.Api;
 /// <summary>
 /// Turns a stored analysis and its sources into the response clients see.
 /// </summary>
-public sealed class AnalysisAssembler(SourceRepository sources, UkweliOptions options)
+public sealed class AnalysisAssembler(
+    SourceRepository sources,
+    TranslationService translations,
+    UkweliOptions options)
 {
+    /// <param name="language">
+    /// The language to read the result in. Only the prose changes: the verdict,
+    /// the sources, the dates and the relations are the same in every language,
+    /// and a source excerpt is never translated, because a translated quotation
+    /// is no longer a quotation.
+    /// </param>
+    /// <param name="translate">
+    /// False to render from stored translations only, never calling the model.
+    /// </param>
     public async Task<AnalysisResponse> AssembleAsync(
-        ClaimAnalysis analysis, CancellationToken cancellationToken = default)
+        ClaimAnalysis analysis,
+        Language language = Language.English,
+        bool translate = true,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(analysis);
+
+        var rendering = await translations.RenderAsync(
+            analysis, language, translate, cancellationToken);
 
         var resolved = await sources.ResolveAsync(analysis.SourceIds, cancellationToken);
 
@@ -39,10 +57,10 @@ public sealed class AnalysisAssembler(SourceRepository sources, UkweliOptions op
             NormalizedClaim: analysis.NormalizedClaim,
             Jurisdiction: analysis.Jurisdiction,
             Status: analysis.Status,
-            Explanation: analysis.Explanation,
-            SimpleExplanation: analysis.SimpleExplanation,
-            Unknowns: analysis.Unknowns,
-            Action: analysis.Action,
+            Explanation: rendering.Text.Explanation,
+            SimpleExplanation: rendering.Text.SimpleExplanation,
+            Unknowns: rendering.Text.Unknowns,
+            Action: rendering.Text.Action,
             ActionIsGeneric: analysis.ActionIsGeneric,
             Sources: cited,
             CheckedOn: checkedOn,
@@ -51,7 +69,11 @@ public sealed class AnalysisAssembler(SourceRepository sources, UkweliOptions op
                 checkedOn,
                 PrimarySourceUrl(resolved, analysis),
                 options.AppUrl,
-                analysis.Id));
+                analysis.Id,
+                rendering.Language),
+            Language: rendering.Language,
+            AvailableLanguages: Languages.All,
+            TranslationNote: rendering.Note);
     }
 
     /// <summary>

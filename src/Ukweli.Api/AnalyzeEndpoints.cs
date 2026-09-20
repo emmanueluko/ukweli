@@ -14,6 +14,7 @@ public static class AnalyzeEndpoints
     {
         app.MapPost("/api/analyze", async (
             AnalyzeRequest request,
+            string? lang,
             AnalyzeService analyze,
             AnalysisPipeline pipeline,
             AnalysisAssembler assembler,
@@ -79,7 +80,8 @@ public static class AnalyzeEndpoints
                 }
             }
 
-            var response = await assembler.AssembleAsync(analysis, cancellationToken);
+            var response = await assembler.AssembleAsync(
+                analysis, Languages.Parse(lang), cancellationToken: cancellationToken);
             var elapsedMs = (long)Stopwatch.GetElapsedTime(started).TotalMilliseconds;
 
             // Ids, verdicts and timings only. Claim text is never logged.
@@ -108,6 +110,7 @@ public static class AnalyzeEndpoints
 
         app.MapGet("/api/results/{id}", async (
             string id,
+            string? lang,
             AnalysisRepository analyses,
             AnalysisAssembler assembler,
             CancellationToken cancellationToken) =>
@@ -120,11 +123,15 @@ public static class AnalyzeEndpoints
                     ErrorCodes.NotFound,
                     $"No result with id '{id}'.",
                     retryable: false)
-                : Results.Ok(await assembler.AssembleAsync(analysis, cancellationToken));
+                : Results.Ok(await assembler.AssembleAsync(
+                    analysis, Languages.Parse(lang), cancellationToken: cancellationToken));
         })
         .WithName("GetResult")
         .WithSummary("Reload a stored result by id")
-        .WithDescription("The id behind a /r/{id} share link.")
+        .WithDescription(
+            "The id behind a /r/{id} share link. Pass ?lang=en|pcm|fr to read the same result "
+            + "in another language: the verdict, the sources and the dates are identical in "
+            + "every language, and excerpts are always quoted as published.")
         .Produces<AnalysisResponse>()
         .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound);
     }

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { api, ApiError, claimLimits, type ExampleClaim } from '../api';
+import { api, ApiError, claimLimits, type ExampleClaim, storedLanguage } from '../api';
 import { Brand } from '../components/Brand';
 import { ErrorPanel } from '../components/Feedback';
 import { useSession } from '../useSession';
@@ -36,7 +36,7 @@ export function Home() {
     setError(null);
 
     try {
-      const analysis = await api.analyze(input);
+      const analysis = await api.analyze(input, storedLanguage());
       navigate(`/r/${analysis.id}`);
     } catch (cause) {
       setError(

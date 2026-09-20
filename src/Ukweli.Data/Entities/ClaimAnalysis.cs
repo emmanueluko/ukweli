@@ -60,5 +60,20 @@ public class ClaimAnalysis
     /// <summary><c>provider/model@prompt-vN</c>, or a deterministic marker for seeds.</summary>
     public string ModelVersion { get; set; } = string.Empty;
 
+    /// <summary>
+    /// The prose in languages other than English, keyed by language code.
+    /// </summary>
+    /// <remarks>
+    /// Written once, the first time somebody asks for that language, and kept.
+    /// A result is a record of what the evidence showed, and a shared link must
+    /// read the same to everyone who opens it — re-translating per request would
+    /// let the same analysis word itself differently on two screens.
+    ///
+    /// Only prose lives here. The verdict, the sources, the dates and the
+    /// relations are the same facts in every language, so switching language
+    /// can change how the answer reads and never what it says.
+    /// </remarks>
+    public Dictionary<string, Translation> Translations { get; set; } = [];
+
     public DateTimeOffset CreatedAt { get; set; }
 }

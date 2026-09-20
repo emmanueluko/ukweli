@@ -133,6 +133,7 @@ public static class AuthEndpoints
         .Produces<ApiErrorResponse>(StatusCodes.Status401Unauthorized);
 
         app.MapGet("/api/me/analyses", async (
+            string? lang,
             CurrentUser currentUser,
             AnalysisRepository analyses,
             AnalysisAssembler assembler,
@@ -146,10 +147,15 @@ public static class AuthEndpoints
             var rows = await analyses.ListForUserAsync(
                 currentUser.UserId!, cancellationToken: cancellationToken);
 
+            // Stored translations only. Rendering a whole history on demand
+            // would cost one model call per row every time the page is opened,
+            // and a list of past checks is not worth that wait.
+            var language = Languages.Parse(lang);
             var results = new List<AnalysisResponse>(rows.Count);
             foreach (var row in rows)
             {
-                results.Add(await assembler.AssembleAsync(row, cancellationToken));
+                results.Add(await assembler.AssembleAsync(
+                    row, language, translate: false, cancellationToken));
             }
 
             return Results.Ok(results);

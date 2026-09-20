@@ -38,6 +38,30 @@ safe next step.
   advice. Any suggested step that is not grounded in a cited excerpt is
   replaced with a fixed caution to verify with the issuing authority.
 
+## Languages
+
+A result can be read in **English**, **Nigerian Pidgin** and **French**. The
+same finding, in different words: the verdict, the cited sources, the dates and
+each source's relation to the claim are identical in every language. Switching
+language changes how the answer reads and never what it says.
+
+Two things are never translated. **Source excerpts** stay in the language the
+authority published them in — Ukweli's promise is that it quotes the document,
+and a translated quotation is no longer a quotation. **The normalised claim**
+stays as recorded, because it is what the user asked, not what Ukweli answered.
+
+A language is produced the first time somebody asks for it and then stored, so
+switching is instant afterwards and a shared `/r/{id}` link reads the same for
+everyone who opens it. Every translation is put back through the safety rules in
+its own language: figures must survive unchanged, no unknown may be dropped, no
+confidence wording may appear, and the next step must still ask somebody to
+check or to wait. A translation that fails those checks is discarded and the
+English is shown with a note saying the translation is unavailable — never
+English wearing another language's label.
+
+The three seeded demo claims carry hand-written Pidgin and French, so all three
+languages work with no API key at all.
+
 ## Current coverage, stated plainly
 
 The store holds **five curated sources, all from the NCDC**, covering Lassa
@@ -117,6 +141,11 @@ curl -s localhost:8787/api/examples
 curl -s -X POST localhost:8787/api/analyze \
   -H 'Content-Type: application/json' \
   -d '{"exampleId":"seed-lassa-herbal-cure"}'
+
+# The same result in Pidgin, then in French. Same verdict, same sources,
+# same dates — the excerpts stay exactly as NCDC published them.
+curl -s 'localhost:8787/api/results/<id>?lang=pcm'
+curl -s 'localhost:8787/api/results/<id>?lang=fr'
 ```
 
 Swagger UI is at <http://localhost:8787/swagger> in development.

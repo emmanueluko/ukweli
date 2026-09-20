@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { api, ApiError, claimLimits, type ExampleClaim } from '../api';
+import { api, ApiError, claimLimits, type ExampleClaim, storedLanguage } from '../api';
 import { Brand } from '../components/Brand';
 import { ErrorPanel } from '../components/Feedback';
 import { VerdictIcon, verdictPresentation } from '../components/Verdict';
@@ -29,7 +29,7 @@ export function Landing() {
     setError(null);
 
     try {
-      const analysis = await api.analyze({ text: trimmed });
+      const analysis = await api.analyze({ text: trimmed }, storedLanguage());
       navigate(`/r/${analysis.id}`);
     } catch (cause) {
       setError(

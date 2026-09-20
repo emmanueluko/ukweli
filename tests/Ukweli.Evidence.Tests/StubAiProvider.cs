@@ -20,6 +20,16 @@ public sealed class StubAiProvider : IAiProvider
 
     public Exception? VerdictFailsWith { get; set; }
 
+    /// <summary>What the next translate call returns. Null echoes the English back.</summary>
+    public Translation? NextTranslation { get; set; }
+
+    public Exception? TranslateFailsWith { get; set; }
+
+    public int TranslateCalls { get; private set; }
+
+    /// <summary>The language the last translate call asked for.</summary>
+    public Language? LastTranslateLanguage { get; private set; }
+
     public int ExtractCalls { get; private set; }
 
     public int VerdictCalls { get; private set; }
@@ -62,5 +72,21 @@ public sealed class StubAiProvider : IAiProvider
         return Task.FromResult(
             NextVerdict ?? new ProposedVerdict(
                 VerdictStatus.InsufficientEvidence, "No verdict scripted.", [], [], string.Empty, string.Empty));
+    }
+
+    public Task<Translation> TranslateAsync(
+        Translation approved,
+        Language language,
+        CancellationToken cancellationToken)
+    {
+        TranslateCalls++;
+        LastTranslateLanguage = language;
+
+        if (TranslateFailsWith is { } failure)
+        {
+            throw failure;
+        }
+
+        return Task.FromResult(NextTranslation ?? approved);
     }
 }

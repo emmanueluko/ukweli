@@ -8,6 +8,10 @@ import { ScreenHeader } from '../components/ScreenHeader';
 const topicLabel: Record<SourceDetailData['topic'], string> = {
   payments_levies: 'Payments & levies',
   disease_outbreaks: 'Disease outbreaks',
+  health_products: 'Health products & recalls',
+  identity_documents: 'Identity & documents',
+  emergencies: 'Emergencies & safety',
+  elections: 'Elections',
 };
 
 const jurisdictionLabel: Record<SourceDetailData['jurisdiction'], string> = {

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Ukweli.Contracts;
 using Ukweli.Data.Entities;
 
 namespace Ukweli.Data;
@@ -41,6 +42,41 @@ public sealed class AnalysisRepository(UkweliDbContext db)
         db.ClaimAnalyses.Add(analysis);
         await db.SaveChangesAsync(cancellationToken);
         return analysis;
+    }
+
+    /// <summary>
+    /// Stores a translation against an analysis, so the next reader of the same
+    /// link in the same language gets it immediately and gets the same words.
+    /// </summary>
+    /// <remarks>
+    /// Write-once: a language already present is left alone. Two readers asking
+    /// for Pidgin at the same moment would otherwise each store their own
+    /// rendering, and the second would silently change the text under the first.
+    /// </remarks>
+    public async Task SaveTranslationAsync(
+        string analysisId,
+        string language,
+        Translation translation,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(translation);
+
+        var analysis = await db.ClaimAnalyses
+            .FirstOrDefaultAsync(row => row.Id == analysisId, cancellationToken);
+
+        if (analysis is null || analysis.Translations.ContainsKey(language))
+        {
+            return;
+        }
+
+        // Replaced rather than mutated: the jsonb comparer tracks the dictionary
+        // by value, and an in-place add on the same instance is not seen as a change.
+        analysis.Translations = new Dictionary<string, Translation>(analysis.Translations)
+        {
+            [language] = translation,
+        };
+
+        await db.SaveChangesAsync(cancellationToken);
     }
 
     /// <summary>A caller's own analyses, newest first (Phase 4).</summary>

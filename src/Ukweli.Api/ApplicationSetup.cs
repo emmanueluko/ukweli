@@ -38,6 +38,7 @@ public static class ApplicationSetup
         builder.Services.AddScoped<SourceRepository>();
         builder.Services.AddScoped<AnalysisRepository>();
         builder.Services.AddScoped<AnalysisAssembler>();
+        builder.Services.AddScoped<TranslationService>();
         builder.Services.AddScoped<AnalyzeService>();
         builder.Services.AddSingleton<SeedStore>(_ => new SeedStore());
         builder.Services.AddSingleton<PromptLibrary>(_ => new PromptLibrary());

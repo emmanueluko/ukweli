@@ -47,4 +47,18 @@ internal static partial class AnalysisLog
         Level = LogLevel.Warning,
         Message = "Stripped {Count} cited source id(s) the model invented")]
     public static partial void StrippedUnknownSources(this ILogger logger, int count);
+
+    [LoggerMessage(
+        EventId = 1005,
+        Level = LogLevel.Warning,
+        Message = "Refused the {Language} translation of {AnalysisId}: {Reason}")]
+    public static partial void TranslationRefused(
+        this ILogger logger, string analysisId, string language, string reason);
+
+    [LoggerMessage(
+        EventId = 1006,
+        Level = LogLevel.Warning,
+        Message = "Could not translate {AnalysisId} into {Language}: {Reason}")]
+    public static partial void TranslationUnavailable(
+        this ILogger logger, string analysisId, string language, string reason);
 }

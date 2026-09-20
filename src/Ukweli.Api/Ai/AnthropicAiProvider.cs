@@ -36,6 +36,10 @@ public sealed class AnthropicAiProvider(
 
     private const int MaxTokens = 2048;
 
+    /// <summary>Non-ASCII stays readable in the prompt the model is shown.</summary>
+    private static readonly JsonSerializerOptions PayloadOptions =
+        new() { WriteIndented = true, Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
+
     /// <summary>Identifies which model and prompt produced a stored analysis.</summary>
     public static string VersionFor(string promptVersion) =>
         $"anthropic/{ModelId}@{promptVersion}";
@@ -84,6 +88,67 @@ public sealed class AnthropicAiProvider(
         var json = await CallAsync(prompt, VerdictSchema, cancellationToken);
 
         return ParseVerdict(json);
+    }
+
+    public async Task<Translation> TranslateAsync(
+        Translation approved,
+        Language language,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(approved);
+
+        // English is the language the result was written and checked in.
+        if (language == Language.English)
+        {
+            return approved;
+        }
+
+        var prompt = PromptLibrary.Fill(
+            prompts.Translate,
+            new Dictionary<string, string>
+            {
+                ["LANGUAGE"] = LanguageName(language),
+                ["PAYLOAD"] = JsonSerializer.Serialize(
+                    new
+                    {
+                        explanation = approved.Explanation,
+                        simpleExplanation = approved.SimpleExplanation,
+                        unknowns = approved.Unknowns,
+                        action = approved.Action,
+                    },
+                    PayloadOptions),
+            });
+
+        var json = await CallAsync(prompt, TranslateSchema, cancellationToken);
+
+        return ParseTranslation(json);
+    }
+
+    /// <summary>
+    /// How the prompt names a language. Spelled out rather than passed as a
+    /// code, because "pcm" means nothing to a reader of the prompt.
+    /// </summary>
+    private static string LanguageName(Language language) => language switch
+    {
+        Language.NigerianPidgin => "Nigerian Pidgin",
+        Language.French => "French",
+        _ => "English",
+    };
+
+    internal static Translation ParseTranslation(JsonElement json)
+    {
+        var translation = new Translation(
+            Explanation: String(json, "explanation") ?? string.Empty,
+            SimpleExplanation: String(json, "simpleExplanation") ?? string.Empty,
+            Unknowns: StringArray(json, "unknowns"),
+            Action: String(json, "action") ?? string.Empty);
+
+        if (string.IsNullOrWhiteSpace(translation.Explanation))
+        {
+            throw new AiUnavailableException("The model returned an empty translation.");
+        }
+
+        return translation;
     }
 
     /// <summary>
@@ -276,6 +341,20 @@ public sealed class AnthropicAiProvider(
             "unknowns": { "type": "array", "items": { "type": "string" } },
             "action": { "type": "string" },
             "simpleExplanation": { "type": "string" }
+          }
+        }
+        """);
+
+    private static IReadOnlyDictionary<string, JsonElement> TranslateSchema => Schema("""
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["explanation", "simpleExplanation", "unknowns", "action"],
+          "properties": {
+            "explanation": { "type": "string" },
+            "simpleExplanation": { "type": "string" },
+            "unknowns": { "type": "array", "items": { "type": "string" } },
+            "action": { "type": "string" }
           }
         }
         """);
