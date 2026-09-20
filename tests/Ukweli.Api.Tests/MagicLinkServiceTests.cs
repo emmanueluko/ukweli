@@ -36,6 +36,19 @@ public class MagicLinkServiceTests
         Assert.Equal(expected, Auth.MagicLinkService.NormaliseEmail(input));
     }
 
+    [Theory]
+    [InlineData("https://www.ukweli.online", "ukweli.online")]
+    [InlineData("https://ukweli.online", "ukweli.online")]
+    [InlineData("https://WWW.Ukweli.Online", "ukweli.online")] // Uri.Host lower-cases
+    [InlineData("http://localhost:5173", "localhost")]
+    public void SendsFromTheVerifiedDomainNotTheWwwSubdomain(string appUrl, string expected)
+    {
+        // Resend verifies the registrable domain. Sending from www. is sending
+        // from an unverified subdomain, which is rejected — and invisibly so,
+        // because the endpoint answers 202 either way.
+        Assert.Equal(expected, Auth.ResendMailer.SendingDomain(appUrl));
+    }
+
     [Fact]
     public void TokensAreUnpredictableAndUrlSafe()
     {

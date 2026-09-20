@@ -49,8 +49,14 @@ public static class ApplicationSetup
         builder.Services.AddScoped<MagicLinkService>();
         builder.Services.AddSingleton<RateLimiter>();
 
-        // Resend in production, Mailpit in development — chosen once, here.
-        if (!string.IsNullOrWhiteSpace(options.ResendApiKey))
+        // Resend in production, SMTP everywhere else.
+        //
+        // Keyed on the environment rather than on whether a key happens to be
+        // present: a production Resend key sitting in a developer's .env would
+        // otherwise silently turn local sign-in tests into real email sent to
+        // real addresses. Development sends to Mailpit even with a key
+        // configured.
+        if (builder.Environment.IsProduction() && !string.IsNullOrWhiteSpace(options.ResendApiKey))
         {
             builder.Services.AddHttpClient<IMailer, ResendMailer>();
         }

@@ -66,6 +66,8 @@ services:
       # A bare hostname makes Caddy obtain a certificate automatically.
       # Use localhost for a local run — it issues a local certificate instead.
       UKWELI_DOMAIN: ${UKWELI_DOMAIN:-localhost}
+      # The bare domain, redirected to the canonical host above.
+      UKWELI_APEX: ${UKWELI_APEX:-http://localhost:8080}
     volumes:
       - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
       - ukweli-caddy-data:/data

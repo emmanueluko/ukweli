@@ -16,7 +16,7 @@ public sealed class ResendMailer(
         {
             Content = JsonContent.Create(new
             {
-                from = $"Ukweli <no-reply@{new Uri(options.AppUrl).Host}>",
+                from = $"Ukweli <no-reply@{SendingDomain(options.AppUrl)}>",
                 to = new[] { email },
                 subject = MagicLinkEmail.Subject,
                 text = MagicLinkEmail.Body(linkUrl, MagicLinkService.ValidFor),
@@ -37,5 +37,25 @@ public sealed class ResendMailer(
         }
 
         logger.MagicLinkSent("resend");
+    }
+
+    /// <summary>
+    /// The domain to send from, derived from <c>APP_URL</c>.
+    /// </summary>
+    /// <remarks>
+    /// The leading <c>www.</c> is dropped. A mail provider verifies the
+    /// registrable domain — <c>ukweli.online</c> — while the site may be served
+    /// from <c>www.ukweli.online</c>; sending from the latter is sending from an
+    /// unverified subdomain, and the provider rejects it. That failure is
+    /// invisible from the outside, because the sign-in endpoint answers 202
+    /// either way, so the only symptom is a link that never arrives.
+    /// </remarks>
+    internal static string SendingDomain(string appUrl)
+    {
+        var host = new Uri(appUrl).Host;
+
+        return host.StartsWith("www.", StringComparison.OrdinalIgnoreCase)
+            ? host["www.".Length..]
+            : host;
     }
 }

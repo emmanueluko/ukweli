@@ -1,0 +1,94 @@
+name: Deploy
+
+# Every push to main redeploys, but only after CI has passed on that same
+# commit. Shipping a red build to the demo box is worse than not shipping.
+on:
+  workflow_run:
+    workflows: ['CI']
+    types: [completed]
+    branches: [main]
+  # Kept for re-deploying a commit that is already green.
+  workflow_dispatch:
+
+concurrency:
+  # One deploy at a time, and a newer push supersedes one still queued.
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to production
+    runs-on: ubuntu-latest
+    # workflow_dispatch has no upstream conclusion, so allow it through.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+
+    steps:
+      - name: Check out the commit CI approved
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Open an SSH connection
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          # Pinned from the known_hosts recorded at provisioning time, so this
+          # fails loudly if the host identity ever changes rather than trusting
+          # whatever answers on that address.
+          echo "${{ secrets.DEPLOY_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Pull, rebuild and restart
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+          SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+        run: |
+          ssh -i ~/.ssh/deploy_key "$USER@$HOST" bash -seuo pipefail <<REMOTE
+            cd /opt/ukweli
+
+            echo "==> Fetching ${SHA:0:12}"
+            git fetch --quiet origin main
+            git reset --hard --quiet "$SHA"
+
+            echo "==> Rebuilding"
+            docker compose up -d --build
+
+            echo "==> Applying any new migrations and reseeding sources"
+            # The API entrypoint migrates on boot; seeding is idempotent and
+            # picks up any newly curated sources in the same push.
+            docker compose exec -T api dotnet /app/cli/Ukweli.Cli.dll seed
+          REMOTE
+
+      - name: Verify the new deployment is actually serving
+        env:
+          APP_URL: ${{ secrets.DEPLOY_APP_URL }}
+        run: |
+          echo "Waiting for $APP_URL/healthz"
+          for attempt in $(seq 1 30); do
+            body=$(curl -fsS --max-time 10 "$APP_URL/healthz" 2>/dev/null) && {
+              echo "$body"
+              # A 200 with db:false is a broken deploy wearing a green tick.
+              echo "$body" | grep -q '"db":true' && {
+                echo "Deployment healthy."
+                exit 0
+              }
+              echo "Reachable, but the database is not. Failing." >&2
+              exit 1
+            }
+            sleep 5
+          done
+          echo "The new deployment never became healthy." >&2
+          exit 1
+
+      - name: Report what is on the box if the deploy failed
+        if: failure()
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          ssh -i ~/.ssh/deploy_key "$USER@$HOST" \
+            'cd /opt/ukweli && docker compose ps && docker compose logs --tail 80 api' || true

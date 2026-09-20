@@ -1,10 +1,16 @@
-# Caddy obtains and renews the certificate itself; there is nothing to configure
-# beyond the hostname.
+# Caddy obtains and renews certificates itself; there is nothing to configure
+# beyond the hostnames.
+
+# People type the bare domain. Sending them to the canonical host keeps one
+# origin, which is what lets the session cookie be SameSite=Lax and removes
+# CORS — and stops /r/{id} share links existing under two different addresses.
+{$UKWELI_APEX} {
+	redir https://{$UKWELI_DOMAIN}{uri} permanent
+}
+
 {$UKWELI_DOMAIN} {
 	encode gzip
 
-	# The API and the web app share one origin. That is what lets the session
-	# cookie be SameSite=Lax and still work, and it removes CORS entirely.
 	handle /api/* {
 		reverse_proxy api:8787
 	}
@@ -23,6 +29,7 @@
 		X-Content-Type-Options nosniff
 		X-Frame-Options DENY
 		Referrer-Policy strict-origin-when-cross-origin
+		Strict-Transport-Security "max-age=31536000"
 		-Server
 	}
 }
