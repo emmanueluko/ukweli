@@ -49,59 +49,122 @@ public static class MagicLinkEmail
     /// </remarks>
     public static string Html(string linkUrl, TimeSpan validFor, string appUrl)
     {
-        var logo = $"{appUrl.TrimEnd('/')}/ukweli-icon.png";
+        var root = appUrl.TrimEnd('/');
+        var logo = $"{root}/ukweli-icon.png";
         var minutes = $"{validFor.TotalMinutes:0}";
         var safeLink = System.Net.WebUtility.HtmlEncode(linkUrl);
+
+        // Georgia stands in for the brand's Fraunces: a web font in an email is
+        // blocked or ignored by most clients, and a serif that is present
+        // everywhere reads closer to the brand than a fallback sans would.
+        const string Serif = "Georgia,'Times New Roman',serif";
+        const string Sans = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
 
         return $"""
         <!doctype html>
         <html lang="en">
-        <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-        <body style="margin:0;padding:0;background:#fcfcf9;">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fcfcf9;padding:32px 16px;">
-            <tr><td align="center">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#ffffff;border-radius:14px;padding:32px 28px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width,initial-scale=1">
+          <meta name="color-scheme" content="light">
+          <title>Sign in to Ukweli</title>
+        </head>
+        <body style="margin:0;padding:0;background:#fcfcf9;-webkit-font-smoothing:antialiased;">
 
-                <tr><td align="center" style="padding-bottom:20px;">
-                  <img src="{logo}" width="56" height="56" alt="Ukweli"
-                       style="display:block;border:0;border-radius:14px;">
+          <!-- The line inboxes show beside the subject. Without it they show the
+               first words of the body, which here would be the brand name twice. -->
+          <div style="display:none;max-height:0;overflow:hidden;opacity:0;">
+            Your sign-in link — it works once and expires in {minutes} minutes.
+          </div>
+
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                 style="background:#fcfcf9;">
+            <tr><td align="center" style="padding:32px 16px;">
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                     style="max-width:480px;">
+
+                <!-- Masthead -->
+                <tr><td align="center" style="padding-bottom:24px;">
+                  <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <td style="padding-right:10px;">
+                        <img src="{logo}" width="40" height="40" alt=""
+                             style="display:block;border:0;border-radius:10px;">
+                      </td>
+                      <td style="font-family:{Serif};font-size:23px;font-weight:700;color:#163f2b;
+                                 letter-spacing:-0.01em;">
+                        Ukweli
+                      </td>
+                    </tr>
+                  </table>
                 </td></tr>
 
-                <tr><td align="center" style="font-size:22px;font-weight:700;color:#1b1f1c;padding-bottom:8px;">
-                  Sign in to Ukweli
+                <!-- Card -->
+                <tr><td style="background:#ffffff;border:1px solid #edefe8;border-radius:16px;
+                               padding:40px 32px;">
+
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr><td align="center" style="font-family:{Serif};font-size:27px;line-height:1.25;
+                                                  font-weight:600;color:#1b1f1c;padding-bottom:12px;">
+                      Sign in to Ukweli
+                    </td></tr>
+
+                    <tr><td align="center" style="font-family:{Sans};font-size:15px;line-height:1.6;
+                                                  color:#51604f;padding-bottom:30px;">
+                      Tap the button below and you are in. There is no password to remember.
+                    </td></tr>
+
+                    <tr><td align="center" style="padding-bottom:20px;">
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                        <tr><td align="center" bgcolor="#1e5b3c" style="border-radius:10px;">
+                          <a href="{safeLink}"
+                             style="display:inline-block;font-family:{Sans};font-size:16px;
+                                    font-weight:600;color:#ffffff;text-decoration:none;
+                                    padding:16px 40px;border-radius:10px;">
+                            Sign in to Ukweli
+                          </a>
+                        </td></tr>
+                      </table>
+                    </td></tr>
+
+                    <tr><td align="center" style="font-family:{Sans};font-size:13px;line-height:1.5;
+                                                  color:#51604f;padding-bottom:28px;">
+                      Works once &middot; expires in {minutes} minutes
+                    </td></tr>
+
+                    <tr><td style="border-top:1px solid #edefe8;padding-top:22px;
+                                   font-family:{Sans};font-size:12px;line-height:1.6;color:#51604f;">
+                      <strong style="color:#1b1f1c;font-weight:600;">Button not working?</strong><br>
+                      Copy this address into your browser:<br>
+                      <span style="color:#163f2b;word-break:break-all;">{safeLink}</span>
+                    </td></tr>
+                  </table>
+
                 </td></tr>
 
-                <tr><td align="center" style="font-size:15px;line-height:1.55;color:#51604f;padding-bottom:26px;">
-                  Tap the button below to finish signing in. No password needed.
+                <!-- A person who did not request this needs to know nothing has happened. -->
+                <tr><td style="padding:22px 8px 0 8px;font-family:{Sans};font-size:12px;
+                               line-height:1.6;color:#51604f;">
+                  If you did not ask to sign in, you can ignore this email. The link cannot be
+                  used unless someone opens it, and nothing about your account has changed.
                 </td></tr>
 
-                <tr><td align="center" style="padding-bottom:22px;">
-                  <a href="{safeLink}"
-                     style="display:inline-block;background:#1e5b3c;color:#ffffff;font-size:16px;font-weight:600;
-                            text-decoration:none;padding:15px 34px;border-radius:10px;">
-                    Sign in to Ukweli
-                  </a>
+                <tr><td align="center" style="padding-top:26px;">
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr><td align="center" style="border-top:1px solid #dce1d6;padding-top:18px;
+                                                  font-family:{Sans};font-size:11px;line-height:1.6;
+                                                  color:#51604f;letter-spacing:0.04em;
+                                                  text-transform:uppercase;">
+                      Ukweli &middot; Truth for stronger communities
+                    </td></tr>
+                    <tr><td align="center" style="padding-top:8px;font-family:{Sans};font-size:11px;
+                                                  line-height:1.6;color:#51604f;">
+                      Evidence-backed civic information &middot; not for emergencies
+                    </td></tr>
+                  </table>
                 </td></tr>
 
-                <tr><td align="center" style="font-size:13px;line-height:1.5;color:#51604f;padding-bottom:22px;">
-                  This link works once and expires in {minutes} minutes.
-                </td></tr>
-
-                <tr><td style="border-top:1px solid #edefe8;padding-top:18px;font-size:12px;line-height:1.55;color:#51604f;">
-                  If the button does not work, copy this address into your browser:<br>
-                  <span style="color:#163f2b;word-break:break-all;">{safeLink}</span>
-                </td></tr>
-
-                <tr><td style="padding-top:16px;font-size:12px;line-height:1.55;color:#51604f;">
-                  If you did not ask to sign in, ignore this email. Nobody can use the link
-                  without opening it, and no account has been changed.
-                </td></tr>
-
-              </table>
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;">
-                <tr><td align="center" style="padding-top:18px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:11px;color:#51604f;">
-                  Ukweli — truth for stronger communities
-                </td></tr>
               </table>
             </td></tr>
           </table>
