@@ -1,5 +1,7 @@
 # Ukweli
 
+**Live at [www.ukweli.online](https://www.ukweli.online)**
+
 Evidence-backed civic information verification for African communities. Check
 claims, understand sources, and take informed action.
 
@@ -68,6 +70,29 @@ the built assembly.
 
 The model drafts text; the server decides. Everything the model returns passes
 through pure validation before it is stored or shown.
+
+## Where it runs
+
+| | |
+| --- | --- |
+| Application | <https://www.ukweli.online> |
+| Health check | <https://www.ukweli.online/healthz> |
+| Example claims | <https://www.ukweli.online/api/examples> |
+| Repository | <https://github.com/emmanueluko/ukweli> |
+| CI and deploys | <https://github.com/emmanueluko/ukweli/actions> |
+
+`ukweli.online` redirects to the `www` host, so the app has one canonical
+origin — two would mean `/r/{id}` share links existing at two addresses and a
+session cookie that works on only one of them.
+
+Pushing to `main` redeploys, but only once CI has passed on that same commit.
+The deploy then polls `/healthz` from the public URL and fails unless it reports
+`db: true`: a reachable API on an unreachable database is a broken deployment
+wearing a green tick. See [`deploy/README.md`](deploy/README.md).
+
+In development, Swagger is at <http://localhost:8787/swagger>. It is not
+published in production — the demo is a public claim checker with no admin
+surface, so there is nothing to gain from publishing a schema.
 
 ## Setup
 
