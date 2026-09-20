@@ -35,12 +35,18 @@ log "Fetching the application"
 sudo mkdir -p "$APP_DIR"
 sudo chown "$USER":"$USER" "$APP_DIR"
 
-if [ -d "$APP_DIR/.git" ]; then
-  git -C "$APP_DIR" fetch --quiet origin main
-  git -C "$APP_DIR" reset --hard --quiet origin/main
-else
-  git clone --quiet "$REPO_URL" "$APP_DIR"
+# Initialised in place rather than cloned. The setup order in deploy/README.md
+# has .env written to this directory first, so it is never empty by the time we
+# get here — and `git clone` refuses a non-empty target. Initialising keeps the
+# untracked .env exactly where it is.
+if [ ! -d "$APP_DIR/.git" ]; then
+  git init --quiet --initial-branch=main "$APP_DIR"
+  git -C "$APP_DIR" remote add origin "$REPO_URL"
 fi
+
+git -C "$APP_DIR" remote set-url origin "$REPO_URL"
+git -C "$APP_DIR" fetch --quiet origin main
+git -C "$APP_DIR" reset --hard --quiet origin/main
 
 log "Checking configuration"
 if [ ! -f "$APP_DIR/.env" ]; then
