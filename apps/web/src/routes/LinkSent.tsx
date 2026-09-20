@@ -1,27 +1,50 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { api } from '../api';
+import { api, ApiError } from '../api';
 import { EnvelopeIcon } from '../components/Icons';
 import { ScreenHeader } from '../components/ScreenHeader';
 
+type SendState =
+  | { kind: 'idle' }
+  | { kind: 'sending' }
+  | { kind: 'sent' }
+  | { kind: 'failed'; message: string };
+
 export function LinkSent() {
   const [params] = useSearchParams();
-  const email = params.get('email') ?? '';
-  const [resent, setResent] = useState(false);
+  const email = params.get('email')?.trim() ?? '';
+  const [state, setState] = useState<SendState>({ kind: 'idle' });
+  const resetTimer = useRef<number>(undefined);
+
+  useEffect(() => () => window.clearTimeout(resetTimer.current), []);
 
   async function resend() {
-    if (!email) {
+    if (!email || state.kind === 'sending') {
       return;
     }
 
+    setState({ kind: 'sending' });
+    window.clearTimeout(resetTimer.current);
+
     try {
       await api.requestMagicLink(email);
-      setResent(true);
-    } catch {
-      // Still reported as sent: the endpoint never reveals whether an address
-      // is known, and a failure here must not leak that either.
-      setResent(true);
+      setState({ kind: 'sent' });
+    } catch (cause) {
+      // A rate limit is worth showing: it is the one failure the person can do
+      // something about, namely wait. Everything else stays quiet, because the
+      // endpoint never reveals whether an address is known and an error message
+      // here would leak exactly that.
+      setState(
+        cause instanceof ApiError && cause.code === 'rate_limited'
+          ? { kind: 'failed', message: cause.message }
+          : { kind: 'sent' },
+      );
     }
+
+    // The confirmation clears itself, so a second press has something to say.
+    // Left permanent, the button read "Link sent again" forever and looked
+    // broken however well it worked.
+    resetTimer.current = window.setTimeout(() => setState({ kind: 'idle' }), 5000);
   }
 
   return (
@@ -30,7 +53,7 @@ export function LinkSent() {
 
       <div
         className="stack"
-        style={{ alignItems: 'center', gap: 14, marginTop: 48, textAlign: 'center', padding: '0 12px' }}
+        style={{ alignItems: 'center', gap: 14, marginTop: 40, textAlign: 'center', padding: '0 12px' }}
       >
         <span
           aria-hidden="true"
@@ -47,7 +70,7 @@ export function LinkSent() {
         >
           <EnvelopeIcon />
         </span>
-        <h1 style={{ fontSize: 30, lineHeight: 1.2 }}>Check your inbox</h1>
+        <h1 className="page-title">Check your inbox</h1>
         <p className="lede">
           {email ? (
             <>
@@ -62,9 +85,38 @@ export function LinkSent() {
       </div>
 
       <div className="stack" style={{ gap: 10, marginTop: 12 }}>
-        <button type="button" className="btn btn-secondary" onClick={() => void resend()}>
-          {resent ? 'Link sent again' : 'Resend the link'}
-        </button>
+        {/* Without the address in the URL there is nothing to resend to, so the
+            screen offers the one thing that does work rather than a dead button. */}
+        {email ? (
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => void resend()}
+            disabled={state.kind === 'sending'}
+          >
+            {state.kind === 'sending' && 'Sending…'}
+            {state.kind === 'sent' && 'Sent — check your inbox'}
+            {(state.kind === 'idle' || state.kind === 'failed') && 'Resend the link'}
+          </button>
+        ) : (
+          <Link to="/sign-in" className="btn btn-primary">
+            Enter your email again
+          </Link>
+        )}
+
+        <div aria-live="polite">
+          {state.kind === 'failed' && (
+            <p className="fine" style={{ margin: 0, color: 'var(--contradicted-fg)' }}>
+              {state.message}
+            </p>
+          )}
+          {state.kind === 'sent' && (
+            <p className="fine" style={{ margin: 0 }}>
+              Another link is on its way. The previous one still works until it is used.
+            </p>
+          )}
+        </div>
+
         <Link
           to="/sign-in"
           className="btn-quiet"
@@ -75,8 +127,8 @@ export function LinkSent() {
       </div>
 
       <p className="fine push-down" style={{ borderTop: '1px solid var(--line-soft)', paddingTop: 12 }}>
-        Didn’t get it? Check spam, or wait a minute — delivery can be slow on some networks. In
-        development, mail is captured by Mailpit at localhost:8025.
+        Didn’t get it? Check your spam folder, or wait a minute — delivery can be slow on some
+        networks.
       </p>
     </main>
   );
