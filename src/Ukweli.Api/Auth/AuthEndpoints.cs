@@ -80,16 +80,8 @@ public static class AuthEndpoints
             context.Response.Cookies.Append(
                 MagicLinkService.CookieName,
                 sessionToken,
-                new CookieOptions
-                {
-                    // Not readable from JavaScript, so a script injected into
-                    // the page cannot lift the session.
-                    HttpOnly = true,
-                    Secure = context.Request.IsHttps,
-                    SameSite = SameSiteMode.Lax,
-                    Path = "/",
-                    Expires = DateTimeOffset.UtcNow.Add(MagicLinkService.SessionLifetime),
-                });
+                SessionCookie.Options(
+                    context, DateTimeOffset.UtcNow.Add(MagicLinkService.SessionIdleLifetime)));
 
             // This endpoint is opened by a human clicking a link in an email,
             // not by a script, so it answers with a page rather than with JSON.

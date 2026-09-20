@@ -29,9 +29,20 @@ public sealed class CurrentUserMiddleware(RequestDelegate next)
         if (options.AuthEnabled &&
             context.Request.Cookies.TryGetValue(MagicLinkService.CookieName, out var token))
         {
-            if (await magicLinks.ResolveUserIdAsync(token, context.RequestAborted) is { } userId)
+            if (await magicLinks.ResolveAsync(token, context.RequestAborted) is { } session)
             {
-                currentUser.SignedInAs(userId);
+                currentUser.SignedInAs(session.UserId);
+
+                // The server moved the window, so the browser is told too.
+                // Without this the cookie would still carry its original expiry
+                // and the browser would discard it while the session was live.
+                if (session.RenewedUntil is { } renewedUntil)
+                {
+                    context.Response.Cookies.Append(
+                        MagicLinkService.CookieName,
+                        token,
+                        SessionCookie.Options(context, renewedUntil));
+                }
             }
         }
 

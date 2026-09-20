@@ -3,9 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { api, ApiError, claimLimits, type ExampleClaim } from '../api';
 import { Brand } from '../components/Brand';
 import { ErrorPanel } from '../components/Feedback';
+import { useSession } from '../useSession';
 
 export function Home() {
   const navigate = useNavigate();
+  const session = useSession();
   const [text, setText] = useState('');
   const [examples, setExamples] = useState<ExampleClaim[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
@@ -50,9 +52,19 @@ export function Home() {
     <main className="screen">
       <div className="topbar">
         <Brand />
-        <Link to="/sign-in" className="btn-outline">
-          Sign in
-        </Link>
+        {/* Offering "Sign in" to somebody already signed in is the interface
+            telling them it has not noticed. While the answer is still loading
+            neither is shown, rather than showing the wrong one and swapping. */}
+        {session.state === 'signed-in' && (
+          <Link to="/my-checks" className="btn-outline">
+            My checks
+          </Link>
+        )}
+        {session.state === 'anonymous' && (
+          <Link to="/sign-in" className="btn-outline">
+            Sign in
+          </Link>
+        )}
       </div>
 
       <div className="stack" style={{ gap: 10 }}>
@@ -150,6 +162,15 @@ export function Home() {
           yet, so those claims return “insufficient evidence”.
         </span>
       </div>
+
+      {session.state === 'anonymous' && (
+        <div className="panel-dashed">
+          <span style={{ fontSize: 13, lineHeight: 1.55, color: 'var(--muted)' }}>
+            <Link to="/sign-in">Sign in</Link> to keep your checks. You can check claims
+            without an account — they just are not saved.
+          </span>
+        </div>
+      )}
 
       <div className="stack push-down" style={{ gap: 12 }}>
         <span className="fine">

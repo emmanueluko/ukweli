@@ -3,7 +3,10 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Ukweli.Api.Auth;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Ukweli.Contracts;
+using Ukweli.Data;
 
 namespace Ukweli.Api.Tests;
 
@@ -143,6 +146,90 @@ public class MagicLinkRoundTripTests : IDisposable
         Assert.DoesNotContain("password", body!, StringComparison.OrdinalIgnoreCase);
         // It has to say what to do if you did not ask for it.
         Assert.Contains("did not ask", body, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task UsingASessionExtendsItRatherThanCountingDownToSignOut()
+    {
+        if (!await MailpitIsRunningAsync())
+        {
+            Assert.True(true, "Mailpit is not running; start docker-compose.dev.yml to run this.");
+            return;
+        }
+
+        var email = $"sliding-{Guid.NewGuid():N}@example.com";
+        using var client = _factory.CreateClient(
+            new Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactoryClientOptions
+            {
+                AllowAutoRedirect = false,
+            });
+
+        await client.PostAsJsonAsync("/api/auth/magic-link", new MagicLinkRequest(email));
+        var token = await FindTokenAsync(email);
+        var verified = await client.GetAsync($"/api/auth/verify?token={Uri.EscapeDataString(token!)}");
+        var cookie = SessionCookie(verified);
+        Assert.NotNull(cookie);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<UkweliDbContext>();
+        var hash = Tokens.Hash(cookie!);
+
+        var session = await db.AuthSessions.FirstAsync(s => s.Id == hash);
+        Assert.True(session.ExpiresAt > DateTimeOffset.UtcNow.AddDays(29));
+
+        // Wind the window back as though the session were signed in some days
+        // ago and has just been used again.
+        session.ExpiresAt = DateTimeOffset.UtcNow.AddDays(20);
+        await db.SaveChangesAsync();
+
+        using var signedIn = _factory.CreateClient();
+        signedIn.DefaultRequestHeaders.Add("Cookie", $"{MagicLinkService.CookieName}={cookie}");
+        Assert.Equal(HttpStatusCode.OK, (await signedIn.GetAsync("/api/me")).StatusCode);
+
+        // Using it pushed the window back out, so continued use never signs
+        // somebody out.
+        db.ChangeTracker.Clear();
+        var after = await db.AuthSessions.AsNoTracking().FirstAsync(s => s.Id == hash);
+        Assert.True(
+            after.ExpiresAt > DateTimeOffset.UtcNow.AddDays(29),
+            $"Expected the window to be extended; it ends {after.ExpiresAt:u}.");
+    }
+
+    [Fact]
+    public async Task ASessionEndsAtTheAbsoluteLimitHoweverRecentlyItWasUsed()
+    {
+        if (!await MailpitIsRunningAsync())
+        {
+            Assert.True(true, "Mailpit is not running; start docker-compose.dev.yml to run this.");
+            return;
+        }
+
+        var email = $"absolute-{Guid.NewGuid():N}@example.com";
+        using var client = _factory.CreateClient(
+            new Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactoryClientOptions
+            {
+                AllowAutoRedirect = false,
+            });
+
+        await client.PostAsJsonAsync("/api/auth/magic-link", new MagicLinkRequest(email));
+        var token = await FindTokenAsync(email);
+        var verified = await client.GetAsync($"/api/auth/verify?token={Uri.EscapeDataString(token!)}");
+        var cookie = SessionCookie(verified);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<UkweliDbContext>();
+        var hash = Tokens.Hash(cookie!);
+
+        // Signed in longer ago than the hard limit allows, but used recently.
+        var session = await db.AuthSessions.FirstAsync(s => s.Id == hash);
+        session.CreatedAt = DateTimeOffset.UtcNow - MagicLinkService.SessionAbsoluteLifetime.Add(TimeSpan.FromDays(1));
+        await db.SaveChangesAsync();
+
+        using var stale = _factory.CreateClient();
+        stale.DefaultRequestHeaders.Add("Cookie", $"{MagicLinkService.CookieName}={cookie}");
+
+        // Sliding expiry must not mean a session that never ends.
+        Assert.Equal(HttpStatusCode.Unauthorized, (await stale.GetAsync("/api/me")).StatusCode);
     }
 
     /// <summary>Polls briefly: SMTP delivery is fast but not instantaneous.</summary>

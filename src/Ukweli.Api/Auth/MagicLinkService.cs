@@ -20,8 +20,28 @@ public sealed class MagicLinkService(
     /// <summary>Short: the link is delivered immediately and used immediately.</summary>
     public static readonly TimeSpan ValidFor = TimeSpan.FromMinutes(15);
 
-    /// <summary>Long enough that a demo user is not signed out mid-session.</summary>
-    public static readonly TimeSpan SessionLifetime = TimeSpan.FromDays(30);
+    /// <summary>
+    /// How long a session survives without being used. Extended on use, so
+    /// somebody who keeps checking claims stays signed in rather than being
+    /// turned out abruptly a month after signing in.
+    /// </summary>
+    public static readonly TimeSpan SessionIdleLifetime = TimeSpan.FromDays(30);
+
+    /// <summary>
+    /// The hard limit measured from sign-in, whatever the activity.
+    /// </summary>
+    /// <remarks>
+    /// Sliding expiry on its own would mean a stolen cookie stays valid forever
+    /// as long as somebody keeps using it. This cap guarantees every session
+    /// ends, and asking for a fresh link once a quarter is a small price.
+    /// </remarks>
+    public static readonly TimeSpan SessionAbsoluteLifetime = TimeSpan.FromDays(90);
+
+    /// <summary>
+    /// A session is only extended once it is this far into its window, so an
+    /// active session does not write to the database on every request.
+    /// </summary>
+    private static readonly TimeSpan ExtendAfter = TimeSpan.FromDays(1);
 
     public const string CookieName = "ukweli_session";
 
@@ -114,7 +134,7 @@ public sealed class MagicLinkService(
         {
             Id = Tokens.Hash(sessionToken),
             UserId = user.Id,
-            ExpiresAt = now.Add(SessionLifetime),
+            ExpiresAt = now.Add(SessionIdleLifetime),
             CreatedAt = now,
         });
 
@@ -122,8 +142,15 @@ public sealed class MagicLinkService(
         return sessionToken;
     }
 
-    /// <summary>Resolves a cookie value to a user id, or null when it is not a live session.</summary>
-    public async Task<string?> ResolveUserIdAsync(
+    /// <summary>
+    /// Resolves a cookie to a live session, extending its window if it has been
+    /// in use.
+    /// </summary>
+    /// <returns>
+    /// The user id, and the new expiry when the window moved so the caller can
+    /// re-issue the cookie. Null when the cookie names no live session.
+    /// </returns>
+    public async Task<ResolvedSession?> ResolveAsync(
         string? sessionToken, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(sessionToken))
@@ -132,15 +159,46 @@ public sealed class MagicLinkService(
         }
 
         var hash = Tokens.Hash(sessionToken.Trim());
+        var now = DateTimeOffset.UtcNow;
 
-        var session = await db.AuthSessions
-            .AsNoTracking()
-            .FirstOrDefaultAsync(s => s.Id == hash, cancellationToken);
+        var session = await db.AuthSessions.FirstOrDefaultAsync(s => s.Id == hash, cancellationToken);
 
-        return session is not null && session.ExpiresAt > DateTimeOffset.UtcNow
-            ? session.UserId
-            : null;
+        if (session is null || session.ExpiresAt <= now)
+        {
+            return null;
+        }
+
+        // Past the hard limit the session is over, however recently it was used.
+        var absoluteEnd = session.CreatedAt.Add(SessionAbsoluteLifetime);
+        if (absoluteEnd <= now)
+        {
+            db.AuthSessions.Remove(session);
+            await db.SaveChangesAsync(cancellationToken);
+            return null;
+        }
+
+        var proposed = now.Add(SessionIdleLifetime);
+        if (proposed > absoluteEnd)
+        {
+            proposed = absoluteEnd;
+        }
+
+        if (proposed - session.ExpiresAt >= ExtendAfter)
+        {
+            session.ExpiresAt = proposed;
+            await db.SaveChangesAsync(cancellationToken);
+            return new ResolvedSession(session.UserId, proposed);
+        }
+
+        return new ResolvedSession(session.UserId, null);
     }
+
+    /// <param name="UserId">Who the session belongs to.</param>
+    /// <param name="RenewedUntil">
+    /// Set when the window moved and the cookie should be re-issued; null when
+    /// it was recent enough to leave alone.
+    /// </param>
+    public sealed record ResolvedSession(string UserId, DateTimeOffset? RenewedUntil);
 
     public async Task SignOutAsync(string? sessionToken, CancellationToken cancellationToken)
     {
