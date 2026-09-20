@@ -1,54 +1,26 @@
-import { useEffect, useState } from 'react';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { Home } from './routes/Home';
+import { Landing } from './routes/Landing';
+import { LinkSent } from './routes/LinkSent';
+import { MyChecks } from './routes/MyChecks';
+import { Result } from './routes/Result';
+import { SignIn } from './routes/SignIn';
+import { SourceDetail } from './routes/SourceDetail';
 
-interface Health {
-  ok: boolean;
-  db: boolean;
-  modelConfigured: boolean;
-}
-
-/**
- * Placeholder only. Per the specification the real interface is not built until
- * the backend is complete; this renders the name and reports whether the API
- * behind the dev proxy is reachable, which is enough to prove the proxy works.
- */
 export function App() {
-  const [health, setHealth] = useState<Health | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    fetch('/healthz', { signal: controller.signal })
-      .then((response) => response.json() as Promise<Health>)
-      .then(setHealth)
-      .catch((cause: unknown) => {
-        if (!controller.signal.aborted) {
-          setError(cause instanceof Error ? cause.message : 'API unreachable');
-        }
-      });
-
-    return () => controller.abort();
-  }, []);
-
   return (
-    <main>
-      <h1>Ukweli</h1>
-      <p className="tagline">
-        Evidence-backed civic information verification for African communities.
-      </p>
-
-      <section className="status">
-        <h2>API</h2>
-        {error && <p className="down">Unreachable — {error}</p>}
-        {!error && !health && <p className="pending">Checking…</p>}
-        {health && (
-          <ul>
-            <li>Server: {health.ok ? 'up' : 'degraded'}</li>
-            <li>Database: {health.db ? 'connected' : 'unreachable'}</li>
-            <li>Model key: {health.modelConfigured ? 'configured' : 'not configured'}</li>
-          </ul>
-        )}
-      </section>
-    </main>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route path="/check" element={<Home />} />
+        {/* /r/{id} is the share link the server builds into every shareText. */}
+        <Route path="/r/:id" element={<Result />} />
+        <Route path="/sources/:id" element={<SourceDetail />} />
+        <Route path="/sign-in" element={<SignIn />} />
+        <Route path="/link-sent" element={<LinkSent />} />
+        <Route path="/my-checks" element={<MyChecks />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
