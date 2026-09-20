@@ -22,10 +22,14 @@ public sealed class AnalysisRepository(UkweliDbContext db)
     /// a seeded result has a real id and a real <c>/r/{id}</c> link like any other.
     /// </summary>
     public async Task<ClaimAnalysis?> FindBySeedAsync(
-        string seedId, CancellationToken cancellationToken = default) =>
+        string seedId, string? userId, CancellationToken cancellationToken = default) =>
+        // Scoped to the caller. Without this, the first anonymous run of a
+        // seeded claim created the only row that would ever exist for it, and
+        // every signed-in user who checked the same claim afterwards was handed
+        // that anonymous row — so their check never appeared in their history.
         await db.ClaimAnalyses
             .AsNoTracking()
-            .Where(analysis => analysis.SeedId == seedId)
+            .Where(analysis => analysis.SeedId == seedId && analysis.UserId == userId)
             .OrderBy(analysis => analysis.CreatedAt)
             .FirstOrDefaultAsync(cancellationToken);
 

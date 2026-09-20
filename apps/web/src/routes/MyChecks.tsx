@@ -87,7 +87,14 @@ export function MyChecks() {
         <Brand to="/" size="sm" />
       </div>
 
-      <h1 style={{ fontSize: 30 }}>My checks</h1>
+      <div className="spread" style={{ gap: 12 }}>
+        <h1 className="page-title">My checks</h1>
+        {analyses && analyses.length > 0 && (
+          <Link to="/check" className="btn-outline">
+            New check
+          </Link>
+        )}
+      </div>
 
       {analyses && analyses.length > 0 ? (
         <div className="stack" style={{ gap: 10 }}>
@@ -106,13 +113,19 @@ export function MyChecks() {
           ))}
         </div>
       ) : (
-        <div className="panel-dashed">
-          <strong style={{ fontSize: 13, fontWeight: 700, color: 'var(--muted)' }}>
-            Nothing here yet
-          </strong>
-          <span style={{ fontSize: 13, lineHeight: 1.55, color: 'var(--muted)' }}>
-            Checks you run while signed in will appear here, newest first.
-          </span>
+        <div className="stack" style={{ gap: 14 }}>
+          <div className="panel-dashed">
+            <strong style={{ fontSize: 13, fontWeight: 700, color: 'var(--muted)' }}>
+              Nothing here yet
+            </strong>
+            <span style={{ fontSize: 13, lineHeight: 1.55, color: 'var(--muted)' }}>
+              Checks you run while signed in are saved here, newest first. Anything you
+              checked before signing in was not kept.
+            </span>
+          </div>
+          <Link to="/check" className="btn btn-primary">
+            Check a claim
+          </Link>
         </div>
       )}
 

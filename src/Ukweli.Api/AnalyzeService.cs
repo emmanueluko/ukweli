@@ -75,7 +75,7 @@ public sealed class AnalyzeService(
     {
         ArgumentNullException.ThrowIfNull(seed);
 
-        if (await analyses.FindBySeedAsync(seed.Id, cancellationToken) is { } existing)
+        if (await analyses.FindBySeedAsync(seed.Id, userId, cancellationToken) is { } existing)
         {
             return existing;
         }

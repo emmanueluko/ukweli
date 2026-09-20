@@ -237,6 +237,38 @@ public class AnalyzeEndpointTests : IAsyncLifetime, IDisposable
     }
 
     [Fact]
+    public async Task ASeededClaimIsStoredSeparatelyForEachAccount()
+    {
+        // The seeded lookup used to ignore the caller, so the first anonymous
+        // run of a claim created the only row that would ever exist for it.
+        // Every signed-in user who checked the same claim was handed that
+        // anonymous row, and their check never appeared in their history.
+        using var scope = _factory.Services.CreateScope();
+        var analyses = scope.ServiceProvider.GetRequiredService<AnalysisRepository>();
+        var seeds = scope.ServiceProvider.GetRequiredService<SeedStore>();
+        var service = new AnalyzeService(analyses, seeds);
+        var seed = seeds.Records.First(record => record.Id == InsufficientSeed);
+
+        var anonymous = await service.ResolveSeededAsync(seed, userId: null, TestContext());
+        var mine = await service.ResolveSeededAsync(seed, userId: "user-alpha", TestContext());
+        var mineAgain = await service.ResolveSeededAsync(seed, userId: "user-alpha", TestContext());
+        var theirs = await service.ResolveSeededAsync(seed, userId: "user-beta", TestContext());
+
+        Assert.Null(anonymous.UserId);
+        Assert.Equal("user-alpha", mine.UserId);
+        Assert.Equal("user-beta", theirs.UserId);
+
+        // Each account gets its own row...
+        Assert.NotEqual(anonymous.Id, mine.Id);
+        Assert.NotEqual(mine.Id, theirs.Id);
+
+        // ...and checking the same claim twice reuses that account's row.
+        Assert.Equal(mine.Id, mineAgain.Id);
+    }
+
+    private static CancellationToken TestContext() => CancellationToken.None;
+
+    [Fact]
     public async Task NeverReturnsAConfidenceScore()
     {
         using var client = _factory.CreateClient();

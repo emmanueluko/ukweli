@@ -12,6 +12,8 @@ export function Result() {
   const [error, setError] = useState<ApiError | null>(null);
   const [simple, setSimple] = useState(false);
   const [copied, setCopied] = useState(false);
+  // null while unknown, so nothing flashes on screen before the answer arrives.
+  const [signedIn, setSignedIn] = useState<boolean | null>(null);
 
   const load = useCallback(() => {
     setError(null);
@@ -28,6 +30,15 @@ export function Result() {
   }, [id]);
 
   useEffect(load, [load]);
+
+  useEffect(() => {
+    // 404 means auth is switched off entirely, 401 means simply not signed in.
+    // Neither is worth surfacing here — both just mean "no account to save to".
+    api
+      .me()
+      .then(() => setSignedIn(true))
+      .catch(() => setSignedIn(false));
+  }, []);
 
   if (error) {
     return (
@@ -129,6 +140,18 @@ export function Result() {
           Ukweli is not for emergencies or legal advice.
         </span>
       </section>
+
+      {signedIn === false && (
+        <div className="panel-dashed">
+          <strong style={{ fontSize: 13, fontWeight: 700, color: 'var(--muted)' }}>
+            This check is not being saved
+          </strong>
+          <span style={{ fontSize: 13, lineHeight: 1.55, color: 'var(--muted)' }}>
+            Copy the summary below to keep it, or{' '}
+            <Link to="/sign-in">sign in</Link> so future checks are saved to your account.
+          </span>
+        </div>
+      )}
 
       <div className="stack push-down" style={{ gap: 8 }}>
         <button type="button" className="btn btn-primary" onClick={() => void copyShareText()}>
